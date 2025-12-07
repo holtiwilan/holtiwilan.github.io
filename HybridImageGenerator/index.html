@@ -14,17 +14,6 @@
       overflow: hidden;
     }
 
-    #presetText {
-      min-height: 80px;      /* gut sichtbar */
-      resize: vertical;      /* bei Bedarf größer ziehen */
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      padding: 4px 6px;
-      background: #fafafa;
-      margin-top: 4px;
-      box-sizing: border-box;
-    }
-
     #controls {
       width: 340px;
       padding: 16px 20px;
@@ -40,7 +29,12 @@
 
     #controls h1 {
       font-size: 18px;
-      margin: 0 0 8px 0;
+      margin: 0 0 4px 0;
+    }
+
+    #controls small {
+      font-size: 11px;
+      color: #555;
     }
 
     label {
@@ -85,21 +79,16 @@
       color: #fff;
     }
 
-    #sweetBtn {
-      background: #4b7bd8;
-      color: #fff;
-    }
-
-    #storeSweetBtn {
-      background: #eeeeee;
-      color: #222;
-      font-size: 12px;
-    }
-
     #saveBtn,
     #saveA4Btn,
     #savePdfBtn {
       background: #ddd;
+    }
+
+    #donateBtn {
+      background: #ffc439;   /* klassisches PayPal-Gelb */
+      color: #111;
+      font-weight: 600;
     }
 
     #canvasWrapper {
@@ -147,6 +136,19 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
+
+    #presetText {
+      min-height: 80px;
+      resize: vertical;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 4px 6px;
+      background: #fafafa;
+      margin-top: 4px;
+      box-sizing: border-box;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
   </style>
 
   <!-- jsPDF für PDF-Export -->
@@ -155,12 +157,17 @@
 <body>
   <div id="controls">
     <h1>Hybrid-Karte</h1>
+    <small>
+      1. Fern-Wort eingeben – Nah-Wort wird automatisch „verfremdet“.<br>
+      2. Regler anpassen, bis Nah- und Fernwirkung für deinen Trick passen.<br>
+      3. Mit den Export-Buttons die Karten für den Druck erzeugen.
+    </small>
 
     <label>Fern-Wort (Publikum)</label>
-    <input type="text" id="farText" value="Erfahrung" />
+    <input type="text" id="farText" value="Zauberstab" />
 
     <label>Nah-Wort (Zuschauer nah)</label>
-    <input type="text" id="nearText" value="Erfahrung" />
+    <input type="text" id="nearText" value="Zauberstab" />
     <div style="margin-top:4px;font-size:11px;display:flex;align-items:center;gap:6px;">
       <input type="checkbox" id="autoNear" checked />
       <span>Nah-Wort automatisch aus Fern-Wort erzeugen</span>
@@ -180,7 +187,7 @@
     <label>Unschärfe Fern-Wort</label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="farBlur" min="2" max="20" value="15" />
-      <span class="value" id="farBlurVal">10</span>
+      <span class="value" id="farBlurVal">15</span>
     </div>
     <div class="row">
       <span>wenig</span><span>stark</span>
@@ -198,31 +205,13 @@
     <label>Deckkraft Nah-Wort</label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="nearOpacity" min="5" max="70" value="60" />
-      <span class="value" id="nearOpacityVal">28</span>
+      <span class="value" id="nearOpacityVal">60</span>
     </div>
     <div class="row">
       <span>fast unsichtbar</span><span>deutlich</span>
     </div>
 
-    <button id="renderBtn">Rendern</button>
-    <button id="sweetBtn">Sweet-Spot anwenden</button>
-    <button id="storeSweetBtn">Sweet-Spot = aktuelle Werte</button>
-
-    <span class="section-title">Export</span>
-    <button id="saveBtn">Einzelkarte (PNG)</button>
-    <button id="saveA4Btn">DIN A4 – 2× A5 (PNG)</button>
-    <button id="savePdfBtn">DIN A4 – PDF (2×A5 Vorder/Rück)</button>
-
-    <span class="section-title">Preset Import/Export</span>
-    <textarea id="presetText" rows="5"></textarea>
-    <button id="exportPresetBtn">Einstellungen exportieren</button>
-    <button id="importPresetBtn">Einstellungen importieren</button>
-
-    <p style="font-size:11px; color:#666; margin-top:8px;">
-      Stell die Regler so ein, wie es dir am besten gefällt und klick dann auf
-      „Sweet-Spot = aktuelle Werte“. Ab dann stellt der Sweet-Spot-Button genau
-      diese Kombination wieder her. Mit dem Preset-Export kannst du die Werte sichern.
-    </p>
+    <button id="renderBtn">Erzeugen</button>
 
     <span class="section-title">Fern-Vorschau</span>
     <div id="previewContainer">
@@ -231,10 +220,39 @@
         <div>Publikums-Sicht (verkleinert)</div>
       </div>
     </div>
+
+    <span class="section-title">Export</span>
+    <button id="saveBtn">Einzelkarte (PNG)</button>
+    <button id="saveA4Btn">DIN A4 – 2× A5 (PNG)</button>
+    <button id="savePdfBtn">DIN A4 – PDF (2×A5 Vorder/Rück)</button>
+    <small>
+      • <b>Einzelkarte (PNG)</b>: eine A5-Karte mit Vorderseite (Hybrid-Effekt).<br>
+      • <b>DIN A4 – 2× A5 (PNG)</b>: A4-Bild mit zwei gleichen Vorderseiten untereinander – ideal für einfachen Druck ohne Duplex.<br>
+      • <b>DIN A4 – PDF</b>:<br>
+      &nbsp;&nbsp;Seite 1 – oben: Hybridkarte (Nah/Fern unterschiedlich),<br>
+      &nbsp;&nbsp;Seite 1 – unten: gleiche Karte, aber Nah = Fern (z.B. als „normale“ Karte),<br>
+      &nbsp;&nbsp;Seite 2 – zwei Rückseiten mit nur dem Hintergrund.<br>
+      PDF ist für Duplex-Druck gedacht (lange Seite spiegeln).
+    </small>
+
+    <span class="section-title">Preset Import/Export</span>
+    <textarea id="presetText" rows="5"
+      placeholder='Hier erscheinen deine Einstellungen als JSON, z.B. {"fontSize":230,...}'></textarea>
+    <button id="exportPresetBtn">Einstellungen exportieren</button>
+    <button id="importPresetBtn">Einstellungen importieren</button>
+    <small>
+      Export schreibt die aktuellen Werte in das Feld. Text kopieren und separat speichern.<br>
+      Später den Text wieder einfügen und „Einstellungen importieren“ klicken.
+    </small>
+
+    <span class="section-title">Unterstützen</span>
+    <button id="donateBtn">Per PayPal spenden</button>
+    <small>
+      Wenn dir der Hybrid-Karten-Generator hilft, freue ich mich über einen Kaffee über PayPal 😊
+    </small>
   </div>
 
   <div id="canvasWrapper">
-    <!-- DIN A5 quer bei ~300dpi: 2480 x 1748 -->
     <canvas id="cardCanvas" width="2480" height="1748"></canvas>
   </div>
 
@@ -242,34 +260,6 @@
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
     const FONT_STACK = '"American Typewriter","Courier Prime","Courier New",monospace';
-
-    // Sweet-Spot-Werte
-    let sweetFontSize;
-    let sweetFarBlur;
-    let sweetNearStrength;
-    let sweetNearOpacity;
-
-    function initSweetSpotFromSliders() {
-      sweetFontSize    = parseInt(document.getElementById("fontSize").value, 10);
-      sweetFarBlur     = parseInt(document.getElementById("farBlur").value, 10);
-      sweetNearStrength = parseInt(document.getElementById("nearStrength").value, 10);
-      sweetNearOpacity  = parseInt(document.getElementById("nearOpacity").value, 10);
-    }
-
-    function storeCurrentAsSweetSpot() {
-      const p = getParamsRaw();
-      sweetFontSize     = p.fontSize;
-      sweetFarBlur      = p.farBlur;
-      sweetNearStrength = parseInt(document.getElementById("nearStrength").value, 10);
-      sweetNearOpacity  = parseInt(document.getElementById("nearOpacity").value, 10);
-      alert(
-        "Sweet-Spot aktualisiert:\n\n" +
-        "Schriftgröße: " + sweetFontSize +
-        "\nUnschärfe Fern: " + sweetFarBlur +
-        "\nStärke Nah-Kanten: " + sweetNearStrength +
-        "\nDeckkraft Nah: " + sweetNearOpacity
-      );
-    }
 
     // Hintergrund mit Fallback
     let bgReady = false;
@@ -360,7 +350,7 @@
       updatePreview();
     }
 
-    // High-Pass-Effekt (Nah-Wort) – Zielkontext parametrisierbar
+    // High-Pass-Effekt (Nah-Wort)
     function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetCtx = ctx) {
       const w = canvas.width;
       const h = canvas.height;
@@ -442,8 +432,10 @@
       fctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, dx, dy, drawW, drawH);
     }
 
+    // PNG-Exporte
     function saveSingleCard() {
       try {
+        renderCard();
         const dataURL = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.download = "hybrid-karte-A5.png";
@@ -467,7 +459,6 @@
         a4ctx.fillStyle = "#ffffff";
         a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
 
-        // obere Karte = aktuelle Karte
         renderCard();
         a4ctx.drawImage(canvas, 0, 0);
 
@@ -489,17 +480,89 @@
       }
     }
 
-    function applySweetSpot() {
-      if (sweetFontSize == null) initSweetSpotFromSliders();
-      document.getElementById("fontSize").value      = sweetFontSize;
-      document.getElementById("farBlur").value       = sweetFarBlur;
-      document.getElementById("nearStrength").value  = sweetNearStrength;
-      document.getElementById("nearOpacity").value   = sweetNearOpacity;
-      updateAllSliderLabels();
-      renderCard();
+    // PDF A4 mit zwei Vorderseiten + Rückseiten
+    function drawBgRect(ctxBg, x, y, w, h) {
+      ctxBg.save();
+      ctxBg.fillStyle = "#ffffff";
+      ctxBg.fillRect(x, y, w, h);
+      if (bgReady) {
+        ctxBg.globalAlpha = 0.8;
+        ctxBg.drawImage(bgImage, x, y, w, h);
+        ctxBg.globalAlpha = 1.0;
+      }
+      ctxBg.globalCompositeOperation = "overlay";
+      ctxBg.globalAlpha = 0.12;
+      ctxBg.fillStyle = "#ffffff";
+      ctxBg.fillRect(x, y, w, h);
+      ctxBg.restore();
     }
 
-    // ---------- automatische Nah-Wort-Erzeugung ----------
+    function savePdfA4() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("jsPDF konnte nicht geladen werden.");
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+
+      const p = getParamsRaw();
+      const cardW = canvas.width;
+      const cardH = canvas.height;
+      const gap = 12;
+
+      // Seite 1: zwei Vorderseiten
+      const a4Canvas = document.createElement("canvas");
+      a4Canvas.width = 2480;
+      a4Canvas.height = 3508;
+      const a4ctx = a4Canvas.getContext("2d");
+      a4ctx.fillStyle = "#ffffff";
+      a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
+
+      // oben: aktuelle Hybrid-Karte
+      renderCard();
+      a4ctx.drawImage(canvas, 0, 0);
+
+      // unten: Nah = Fern, gleiche Settings
+      const tmpCanvas = document.createElement("canvas");
+      tmpCanvas.width = cardW;
+      tmpCanvas.height = cardH;
+      const tmpCtx = tmpCanvas.getContext("2d");
+
+      const p2 = {
+        farText: p.farText,
+        nearText: p.farText,    // Nah = Fern
+        fontSize: p.fontSize,
+        farBlur: p.farBlur,
+        nearStrength: p.nearStrength,
+        nearOpacity: p.nearOpacity
+      };
+      renderCardOnContext(tmpCtx, p2.farText, p2.nearText, p2);
+
+      const y2 = cardH + gap;
+      a4ctx.drawImage(tmpCanvas, 0, y2);
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const imgData1 = a4Canvas.toDataURL("image/jpeg", 1.0);
+      pdf.addImage(imgData1, "JPEG", 0, 0, 210, 297);
+
+      // Seite 2: Rückseiten (nur Hintergrund)
+      const backCanvas = document.createElement("canvas");
+      backCanvas.width = 2480;
+      backCanvas.height = 3508;
+      const backCtx = backCanvas.getContext("2d");
+      backCtx.fillStyle = "#ffffff";
+      backCtx.fillRect(0, 0, backCanvas.width, backCanvas.height);
+
+      drawBgRect(backCtx, 0, 0, cardW, cardH);
+      drawBgRect(backCtx, 0, y2, cardW, cardH);
+
+      const imgData2 = backCanvas.toDataURL("image/jpeg", 1.0);
+      pdf.addPage();
+      pdf.addImage(imgData2, "JPEG", 0, 0, 210, 297);
+
+      pdf.save("hybrid-karten.pdf");
+    }
+
+    // automatische Nah-Wort-Erzeugung
     const similarMap = {
       "a":"e","b":"h","c":"e","d":"cl","e":"c","f":"t","g":"q","h":"n","i":"l","j":"i","k":"h",
       "l":"i","m":"rn","n":"m","o":"a","p":"q","q":"p","r":"n","s":"z","t":"f","u":"v","v":"u",
@@ -546,7 +609,7 @@
       ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(updateSliderLabel);
     }
 
-    // ---------- Preset Import/Export ----------
+    // Preset Import/Export
     function exportPreset() {
       const p = getParamsRaw();
       const preset = {
@@ -597,89 +660,7 @@
       renderCard();
     }
 
-    // ---------- PDF Export ----------
-    function drawBgRect(ctxBg, x, y, w, h) {
-      ctxBg.save();
-      ctxBg.fillStyle = "#ffffff";
-      ctxBg.fillRect(x, y, w, h);
-      if (bgReady) {
-        ctxBg.globalAlpha = 0.8;
-        ctxBg.drawImage(bgImage, x, y, w, h);
-        ctxBg.globalAlpha = 1.0;
-      }
-      ctxBg.globalCompositeOperation = "overlay";
-      ctxBg.globalAlpha = 0.12;
-      ctxBg.fillStyle = "#ffffff";
-      ctxBg.fillRect(x, y, w, h);
-      ctxBg.restore();
-    }
-
-    function savePdfA4() {
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        alert("jsPDF konnte nicht geladen werden.");
-        return;
-      }
-      const { jsPDF } = window.jspdf;
-
-      const p = getParamsRaw();
-      const cardW = canvas.width;
-      const cardH = canvas.height;
-      const gap = 12;
-
-      // Seite 1: zwei Vorderseiten
-      const a4Canvas = document.createElement("canvas");
-      a4Canvas.width = 2480;
-      a4Canvas.height = 3508;
-      const a4ctx = a4Canvas.getContext("2d");
-      a4ctx.fillStyle = "#ffffff";
-      a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
-
-      // oben: aktuelle Hybrid-Karte
-      renderCard();              // stellt sicher, dass canvas aktuell ist
-      a4ctx.drawImage(canvas, 0, 0);
-
-      // unten: Nah = Fern, gleiche Settings
-      const tmpCanvas = document.createElement("canvas");
-      tmpCanvas.width = cardW;
-      tmpCanvas.height = cardH;
-      const tmpCtx = tmpCanvas.getContext("2d");
-
-      const p2 = {
-        farText: p.farText,
-        nearText: p.farText,    // Nah = Fern
-        fontSize: p.fontSize,
-        farBlur: p.farBlur,
-        nearStrength: p.nearStrength,
-        nearOpacity: p.nearOpacity
-      };
-      renderCardOnContext(tmpCtx, p2.farText, p2.nearText, p2);
-
-      const y2 = cardH + gap;
-      a4ctx.drawImage(tmpCanvas, 0, y2);
-
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const imgData1 = a4Canvas.toDataURL("image/jpeg", 1.0);
-      pdf.addImage(imgData1, "JPEG", 0, 0, 210, 297);
-
-      // Seite 2: Rückseiten (nur Hintergrund)
-      const backCanvas = document.createElement("canvas");
-      backCanvas.width = 2480;
-      backCanvas.height = 3508;
-      const backCtx = backCanvas.getContext("2d");
-      backCtx.fillStyle = "#ffffff";
-      backCtx.fillRect(0, 0, backCanvas.width, backCanvas.height);
-
-      drawBgRect(backCtx, 0, 0, cardW, cardH);
-      drawBgRect(backCtx, 0, y2, cardW, cardH);
-
-      const imgData2 = backCanvas.toDataURL("image/jpeg", 1.0);
-      pdf.addPage();
-      pdf.addImage(imgData2, "JPEG", 0, 0, 210, 297);
-
-      pdf.save("hybrid-karten.pdf");
-    }
-
-    // ---------- Init & Events ----------
+    // Init & Events
     window.addEventListener("load", () => {
       const farInput  = document.getElementById("farText");
       const nearInput = document.getElementById("nearText");
@@ -709,17 +690,20 @@
       });
 
       document.getElementById("renderBtn").addEventListener("click", renderCard);
-      document.getElementById("sweetBtn").addEventListener("click", applySweetSpot);
-      document.getElementById("storeSweetBtn").addEventListener("click", storeCurrentAsSweetSpot);
       document.getElementById("saveBtn").addEventListener("click", saveSingleCard);
       document.getElementById("saveA4Btn").addEventListener("click", saveA4Sheet);
       document.getElementById("savePdfBtn").addEventListener("click", savePdfA4);
       document.getElementById("exportPresetBtn").addEventListener("click", exportPreset);
       document.getElementById("importPresetBtn").addEventListener("click", importPreset);
 
-      initSweetSpotFromSliders();
+      document.getElementById("donateBtn").addEventListener("click", () => {
+        window.open("https://www.paypal.com/paypalme/timholzhausen", "_blank", "noopener");
+      });
+
       ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(bindSliderLabel);
 
+      // Defaults anwenden
+      updateAllSliderLabels();
       nearInput.value = generateNearFromFar(farInput.value);
       renderCard();
     });

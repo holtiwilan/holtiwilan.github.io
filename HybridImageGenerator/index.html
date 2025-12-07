@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Hybrid-Karte – Nah/Fern-Wort</title>
   <style>
-   body {
+    body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f3f3f3;
@@ -29,7 +29,7 @@
 
     #controls h1 {
       font-size: 18px;
-      margin: 0 0 4px 0;
+      margin: 0 0 6px 0;
     }
 
     #controls small {
@@ -91,11 +91,61 @@
       font-weight: 600;
     }
 
-    /* RECHTER BEREICH MIT HAUPTVORSCHAU */
+    .section-title {
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #666;
+    }
+
+    .value {
+      font-size: 11px;
+      color: #555;
+      width: 40px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .helpbox {
+      font-size: 11px;
+      line-height: 1.4;
+      color: #444;
+      background: #f7f7f7;
+      border-left: 3px solid #bbb;
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    .helpbox p {
+      margin: 4px 0;
+    }
+
+    #contextTip {
+      background: #eef3ff;
+      border-left-color: #4b7bd8;
+    }
+
+    #presetText {
+      min-height: 80px;
+      resize: vertical;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 4px 6px;
+      background: #fafafa;
+      margin-top: 4px;
+      box-sizing: border-box;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    /* rechter Bereich mit großer Vorschau */
     #canvasWrapper {
       flex: 1;
       display: flex;
-      flex-direction: column;   /* neu: Label über Canvas */
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 8px;
@@ -115,8 +165,9 @@
       max-height: 100%;
     }
 
+    /* Fern-Vorschau */
     #previewContainer {
-      margin-top: 10px;
+      margin-top: 4px;
     }
 
     .preview-block {
@@ -125,54 +176,11 @@
     }
 
     .preview-block canvas {
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-
-    .section-title {
-      margin-top: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #666;
-    }
-
-    .value {
-      font-size: 11px;
-      color: #555;
-      width: 40px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    #presetText {
-      min-height: 80px;
-      resize: vertical;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      padding: 4px 6px;
-      background: #fafafa;
       margin-top: 4px;
-      box-sizing: border-box;
-      font-size: 11px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      background: #fff;
+      max-width: 100%;
     }
-
-
-    .helpbox {
-  font-size: 11px;
-  line-height: 1.4;
-  color: #444;
-  background: #f7f7f7;
-  border-left: 3px solid #bbb;
-  padding: 8px 10px;
-  border-radius: 4px;
-}
-
-.helpbox p {
-  margin: 6px 0;
-}
-
   </style>
 
   <!-- jsPDF für PDF-Export -->
@@ -183,15 +191,15 @@
     <h1>Hybrid-Karte</h1>
     <small>
       1. Fern-Wort eingeben – Nah-Wort wird automatisch „verfremdet“.<br>
-      2. Regler anpassen, bis Nah- und Fernwirkung für deinen Trick passen.<br>
-      3. Mit den Export-Buttons die Karten für den Druck erzeugen.
+      2. Regler anpassen, bis Nah- und Fernwirkung passen.<br>
+      3. Mit den Export-Buttons druckfertige Dateien erzeugen.
     </small>
 
     <label>Fern-Wort (Publikum)</label>
     <input type="text" id="farText" value="Zauberstab" />
 
     <label>Nah-Wort (Zuschauer nah)</label>
-    <input type="text" id="nearText" value="Zauberstab" />
+    <input type="text" id="nearText" />
     <div style="margin-top:4px;font-size:11px;display:flex;align-items:center;gap:6px;">
       <input type="checkbox" id="autoNear" checked />
       <span>Nah-Wort automatisch aus Fern-Wort erzeugen</span>
@@ -235,7 +243,10 @@
       <span>fast unsichtbar</span><span>deutlich</span>
     </div>
 
-    <button id="renderBtn">Erzeugen</button>
+    <span class="section-title">Hinweis</span>
+    <div id="contextTip" class="helpbox">
+      Stelle die Regler ein – hier erscheinen passende Tipps.
+    </div>
 
     <span class="section-title">Fern-Vorschau</span>
     <div id="previewContainer">
@@ -245,18 +256,16 @@
       </div>
     </div>
 
+    <button id="renderBtn">Erzeugen</button>
+
     <span class="section-title">Export</span>
     <button id="saveBtn">Einzelkarte (PNG)</button>
     <button id="saveA4Btn">DIN A4 – 2× A5 (PNG)</button>
     <button id="savePdfBtn">DIN A4 – PDF (2×A5 Vorder/Rück)</button>
     <small>
-      • <b>Einzelkarte (PNG)</b>: eine A5-Karte mit Vorderseite (Hybrid-Effekt).<br>
-      • <b>DIN A4 – 2× A5 (PNG)</b>: A4-Bild mit zwei gleichen Vorderseiten untereinander – ideal für einfachen Druck ohne Duplex.<br>
-      • <b>DIN A4 – PDF</b>:<br>
-      &nbsp;&nbsp;Seite 1 – oben: Hybridkarte (Nah/Fern unterschiedlich),<br>
-      &nbsp;&nbsp;Seite 1 – unten: gleiche Karte, aber Nah = Fern (z.B. als „normale“ Karte),<br>
-      &nbsp;&nbsp;Seite 2 – zwei Rückseiten mit nur dem Hintergrund.<br>
-      PDF ist für Duplex-Druck gedacht (lange Seite spiegeln).
+      • <b>Einzelkarte (PNG)</b>: eine A5-Vorderseite.<br>
+      • <b>DIN A4 – 2× A5 (PNG)</b>: zwei gleiche Vorderseiten untereinander.<br>
+      • <b>DIN A4 – PDF</b>: Seite 1 oben Hybridkarte, unten gleiche Karte mit Nah=Fern, Seite 2 zwei Rückseiten.
     </small>
 
     <span class="section-title">Preset Import/Export</span>
@@ -264,70 +273,43 @@
       placeholder='Hier erscheinen deine Einstellungen als JSON, z.B. {"fontSize":230,...}'></textarea>
     <button id="exportPresetBtn">Einstellungen exportieren</button>
     <button id="importPresetBtn">Einstellungen importieren</button>
-    <small>
-      Export schreibt die aktuellen Werte in das Feld. Text kopieren und separat speichern.<br>
-      Später den Text wieder einfügen und „Einstellungen importieren“ klicken.
-    </small>
-<span class="section-title">Kurzanleitung & Tipps</span>
-<div class="helpbox">
-  <p><b>Grundprinzip</b><br>
-  Diese Karten zeigen zwei unterschiedliche Worte – eines aus der Nähe (Zuschauer),
-  eines aus der Entfernung (Publikum).</p>
-
-  <p><b>Empfohlenes Vorgehen</b><br>
-  • Drucke mehrere Varianten derselben Karte.<br>
-  • Teste die Karten immer im echten Raum – nicht nur am Bildschirm.</p>
-
-  <p><b>Wichtige Praxis-Tipps</b><br>
-  • Keine Zuschauer mit Brille oder sehr guter Nahsicht auswählen.<br>
-  • Besonders bei älterem Publikum muss der Effekt stärker eingestellt sein.<br>
-  • Aus sehr kurzer Distanz wird oft das „normale“ Wort gelesen.<br>
-  • Achte darauf, dass unbeteiligte Zuschauer nicht zu nah sitzen.</p>
-
-  <p><b>Faustregel</b><br>
-  Lieber etwas zu stark einstellen und testen,
-  als einmal zu schwach – dann ist der Effekt weg.</p>
-</div>
 
     <span class="section-title">Unterstützen</span>
     <button id="donateBtn">Per PayPal spenden</button>
     <small>
-      Wenn dir der Hybrid-Karten-Generator hilft, freue ich mich über einen Kaffee über PayPal 😊
+      Wenn dir der Hybrid-Karten-Generator hilft, freue ich mich über einen Kaffee 😊
     </small>
   </div>
 
-<div id="canvasWrapper">
-  <div id="mainPreviewLabel">
-    Nah-Vorschau – Sicht des Zuschauers auf der Bühne
+  <div id="canvasWrapper">
+    <div id="mainPreviewLabel">
+      Nah-Vorschau – Sicht des Zuschauers auf der Bühne
+    </div>
+    <!-- DIN A5 quer bei ~300 dpi -->
+    <canvas id="cardCanvas" width="2480" height="1748"></canvas>
   </div>
-  <canvas id="cardCanvas" width="2480" height="1748"></canvas>
-</div>
 
   <script>
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
     const FONT_STACK = '"American Typewriter","Courier Prime","Courier New",monospace';
 
-    // Hintergrund mit Fallback
+    // Hintergrund mit Fallback: background_print.jpg → background.jpg
     let bgReady = false;
     let bgTriedSecond = false;
     const bgImage = new Image();
-    bgImage.onload = () => { bgReady = true; renderCard(); };
+    bgImage.onload = () => {
+      bgReady = true;
+      renderCard();
+      updatePreview();
+    };
     bgImage.onerror = () => {
       if (!bgTriedSecond) {
         bgTriedSecond = true;
-        bgImage.src = "background_print.jpg";
+        bgImage.src = "background.jpg";
       }
     };
-    bgImage.src = "background.jpg";
-
-function safeFileName(str){
-  return str
-    .trim()
-    .replace(/\s+/g, "-")          // Leerzeichen → -
-    .replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "") // Sonderzeichen raus
-    .substring(0, 40);             // nicht zu lang
-}
+    bgImage.src = "background_print.jpg";
 
     function getParamsRaw() {
       return {
@@ -344,7 +326,7 @@ function safeFileName(str){
       return getParamsRaw();
     }
 
-    // ---------- Rendering auf beliebigen Kontext (Karte 2480x1748) ----------
+    // ---------- Rendering Hauptkarte ----------
     function renderCardOnContext(targetCtx, farText, nearText, p) {
       const w = canvas.width;
       const h = canvas.height;
@@ -405,7 +387,7 @@ function safeFileName(str){
       updatePreview();
     }
 
-    // High-Pass-Effekt (Nah-Wort)
+    // High-Pass-Effekt für Nah-Wort
     function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetCtx = ctx) {
       const w = canvas.width;
       const h = canvas.height;
@@ -467,7 +449,7 @@ function safeFileName(str){
       targetCtx.restore();
     }
 
-    // Fern-Vorschau
+    // ---------- Fern-Vorschau ----------
     function updatePreview() {
       const farCanvas = document.getElementById("previewFar");
       if (!farCanvas) return;
@@ -487,7 +469,7 @@ function safeFileName(str){
       fctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, dx, dy, drawW, drawH);
     }
 
-    // PNG-Exporte
+    // ---------- PNG Export ----------
     function saveSingleCard() {
       try {
         renderCard();
@@ -535,7 +517,7 @@ function safeFileName(str){
       }
     }
 
-    // PDF A4 mit zwei Vorderseiten + Rückseiten
+    // ---------- PDF Export ----------
     function drawBgRect(ctxBg, x, y, w, h) {
       ctxBg.save();
       ctxBg.fillStyle = "#ffffff";
@@ -550,6 +532,14 @@ function safeFileName(str){
       ctxBg.fillStyle = "#ffffff";
       ctxBg.fillRect(x, y, w, h);
       ctxBg.restore();
+    }
+
+    function safeFileName(str) {
+      return (str || "Hybrid")
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "")
+        .substring(0, 40);
     }
 
     function savePdfA4() {
@@ -572,7 +562,7 @@ function safeFileName(str){
       a4ctx.fillStyle = "#ffffff";
       a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
 
-      // oben: aktuelle Hybrid-Karte
+      // oben: aktuelle Hybridkarte
       renderCard();
       a4ctx.drawImage(canvas, 0, 0);
 
@@ -584,7 +574,7 @@ function safeFileName(str){
 
       const p2 = {
         farText: p.farText,
-        nearText: p.farText,    // Nah = Fern
+        nearText: p.farText,
         fontSize: p.fontSize,
         farBlur: p.farBlur,
         nearStrength: p.nearStrength,
@@ -599,7 +589,7 @@ function safeFileName(str){
       const imgData1 = a4Canvas.toDataURL("image/jpeg", 1.0);
       pdf.addImage(imgData1, "JPEG", 0, 0, 210, 297);
 
-      // Seite 2: Rückseiten (nur Hintergrund)
+      // Seite 2: Rückseiten
       const backCanvas = document.createElement("canvas");
       backCanvas.width = 2480;
       backCanvas.height = 3508;
@@ -614,12 +604,12 @@ function safeFileName(str){
       pdf.addPage();
       pdf.addImage(imgData2, "JPEG", 0, 0, 210, 297);
 
-     const far = document.getElementById("farText").value || "Hybrid";
+      const far = document.getElementById("farText").value || "Hybrid";
       const fileName = "Hybrid-" + safeFileName(far) + ".pdf";
       pdf.save(fileName);
     }
 
-    // automatische Nah-Wort-Erzeugung
+    // ---------- automatische Nah-Wort-Erzeugung ----------
     const similarMap = {
       "a":"e","b":"h","c":"e","d":"cl","e":"c","f":"t","g":"q","h":"n","i":"l","j":"i","k":"h",
       "l":"i","m":"rn","n":"m","o":"a","p":"q","q":"p","r":"n","s":"z","t":"f","u":"v","v":"u",
@@ -647,26 +637,59 @@ function safeFileName(str){
       }).join("");
     }
 
-    let autoGenerateNear = true;
-
+    // ---------- Slider-Anzeigen ----------
     function updateSliderLabel(id) {
       const slider = document.getElementById(id);
       const label = document.getElementById(id + "Val");
       if (slider && label) label.textContent = slider.value;
     }
 
-    function bindSliderLabel(id) {
-      const slider = document.getElementById(id);
-      if (!slider) return;
-      slider.addEventListener("input", () => updateSliderLabel(id));
-      updateSliderLabel(id);
-    }
-
     function updateAllSliderLabels() {
       ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(updateSliderLabel);
     }
 
-    // Preset Import/Export
+    // ---------- Kontextuelle Tipps ----------
+    function updateContextTip() {
+      const tipBox = document.getElementById("contextTip");
+      if (!tipBox) return;
+
+      const fs = parseInt(document.getElementById("fontSize").value, 10);
+      const fb = parseInt(document.getElementById("farBlur").value, 10);
+      const ns = parseInt(document.getElementById("nearStrength").value, 10);
+      const no = parseInt(document.getElementById("nearOpacity").value, 10);
+      const far = document.getElementById("farText").value.trim();
+      const near = document.getElementById("nearText").value.trim();
+      const auto = document.getElementById("autoNear").checked;
+
+      let tips = [];
+
+      if (fb < 8) {
+        tips.push("Unschärfe Fern-Wort ist sehr niedrig – das Nah-Wort könnte auch aus der Entfernung sichtbar sein.");
+      }
+      if (fb > 16) {
+        tips.push("Hohe Unschärfe – gut für größere Räume oder älteres Publikum.");
+      }
+      if (no > 60) {
+        tips.push("Hohe Deckkraft des Nah-Wortes – Zuschauer mit guter Nahsicht oder Brille könnten beide Worte erkennen.");
+      }
+      if (ns < 25) {
+        tips.push("Nah-Kanten sind sehr zart – nah vor dem Gesicht eventuell schwer lesbar.");
+      }
+      if (far && near && far.length !== near.length) {
+        tips.push("Fern- und Nah-Wort haben unterschiedliche Länge – das kann den Effekt etwas schwächen.");
+      }
+      if (auto) {
+        tips.push("Automatische Nah-Wort-Erzeugung ist aktiv – ideal zum schnellen Ausprobieren.");
+      }
+
+      if (tips.length === 0) {
+        tipBox.innerHTML = "✅ Einstellungen wirken ausgewogen. Jetzt testweise drucken und im echten Raum ausprobieren.";
+      } else {
+        tipBox.innerHTML = "💡 <b>Tipp:</b><br>" + tips.slice(0, 2).join("<br>");
+      }
+    }
+
+    // ---------- Preset Import/Export ----------
     function exportPreset() {
       const p = getParamsRaw();
       const preset = {
@@ -676,12 +699,12 @@ function safeFileName(str){
         farBlur: p.farBlur,
         nearStrength: parseInt(document.getElementById("nearStrength").value, 10),
         nearOpacity: parseInt(document.getElementById("nearOpacity").value, 10),
-        autoNear: autoGenerateNear
+        autoNear: document.getElementById("autoNear").checked
       };
       const json = JSON.stringify(preset);
       const field = document.getElementById("presetText");
       field.value = json;
-      alert("Preset exportiert:\n\n" + json + "\n\nDiesen Text kopieren und speichern.");
+      alert("Preset exportiert.\n\nDiesen Text kopieren und speichern.");
     }
 
     function importPreset() {
@@ -694,7 +717,7 @@ function safeFileName(str){
       try {
         preset = JSON.parse(field.value);
       } catch (e) {
-        alert("Konnte Preset nicht lesen. Gültiges JSON erwartet.");
+        alert("Konnte Preset nicht lesen (ungültiges JSON).");
         return;
       }
 
@@ -705,8 +728,7 @@ function safeFileName(str){
       if (preset.farText !== undefined) farInput.value = preset.farText;
       if (preset.nearText !== undefined) nearInput.value = preset.nearText;
 
-      autoGenerateNear = !!preset.autoNear;
-      autoNearCheckbox.checked = autoGenerateNear;
+      autoNearCheckbox.checked = !!preset.autoNear;
 
       if (preset.fontSize !== undefined) document.getElementById("fontSize").value = preset.fontSize;
       if (preset.farBlur !== undefined) document.getElementById("farBlur").value = preset.farBlur;
@@ -715,54 +737,65 @@ function safeFileName(str){
 
       updateAllSliderLabels();
       renderCard();
+      updateContextTip();
     }
 
-    // Init & Events
+    // ---------- Init & Events ----------
     window.addEventListener("load", () => {
       const farInput  = document.getElementById("farText");
       const nearInput = document.getElementById("nearText");
       const autoNearCheckbox = document.getElementById("autoNear");
 
+      // initial Nah-Wort
+      nearInput.value = generateNearFromFar(farInput.value);
+
       farInput.addEventListener("input", () => {
-        if (!autoGenerateNear) {
-          renderCard();
-          return;
+        if (autoNearCheckbox.checked) {
+          nearInput.value = generateNearFromFar(farInput.value);
         }
-        nearInput.value = generateNearFromFar(farInput.value);
         renderCard();
+        updateContextTip();
       });
 
       nearInput.addEventListener("input", () => {
-        autoGenerateNear = false;
         autoNearCheckbox.checked = false;
         renderCard();
+        updateContextTip();
       });
 
       autoNearCheckbox.addEventListener("change", () => {
-        autoGenerateNear = autoNearCheckbox.checked;
-        if (autoGenerateNear) {
+        if (autoNearCheckbox.checked) {
           nearInput.value = generateNearFromFar(farInput.value);
           renderCard();
         }
+        updateContextTip();
       });
 
-      document.getElementById("renderBtn").addEventListener("click", renderCard);
+      document.getElementById("renderBtn").addEventListener("click", () => {
+        renderCard();
+        updateContextTip();
+      });
       document.getElementById("saveBtn").addEventListener("click", saveSingleCard);
       document.getElementById("saveA4Btn").addEventListener("click", saveA4Sheet);
       document.getElementById("savePdfBtn").addEventListener("click", savePdfA4);
       document.getElementById("exportPresetBtn").addEventListener("click", exportPreset);
       document.getElementById("importPresetBtn").addEventListener("click", importPreset);
-
       document.getElementById("donateBtn").addEventListener("click", () => {
         window.open("https://www.paypal.com/paypalme/timholzhausen", "_blank", "noopener");
       });
 
-      ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(bindSliderLabel);
+      ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(id => {
+        const slider = document.getElementById(id);
+        slider.addEventListener("input", () => {
+          updateSliderLabel(id);
+          renderCard();
+          updateContextTip();
+        });
+      });
 
-      // Defaults anwenden
       updateAllSliderLabels();
-      nearInput.value = generateNearFromFar(farInput.value);
       renderCard();
+      updateContextTip();
     });
   </script>
 </body>

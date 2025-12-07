@@ -3,188 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Hybrid-Karte – Nah/Fern-Wort</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f3f3f3;
-      color: #222;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    #controls {
-      width: 340px;
-      padding: 16px 20px;
-      box-sizing: border-box;
-      background: #ffffff;
-      border-right: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 100vh;
-      overflow-y: auto;
-    }
-
-    #controls h1 {
-      font-size: 18px;
-      margin: 0 0 6px 0;
-    }
-
-    #controls small {
-      font-size: 11px;
-      color: #555;
-    }
-
-    label {
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 6px;
-      display: block;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 6px 8px;
-      margin-top: 2px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    input[type="range"] {
-      width: 100%;
-    }
-
-    .row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-    }
-
-    button {
-      margin-top: 6px;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 0;
-      cursor: pointer;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    #renderBtn {
-      background: #222;
-      color: #fff;
-    }
-
-    #saveBtn,
-    #saveA4Btn,
-    #savePdfBtn {
-      background: #ddd;
-    }
-
-    #donateBtn {
-      background: #ffc439;
-      color: #111;
-      font-weight: 600;
-    }
-
-    .section-title {
-      margin-top: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #666;
-    }
-
-    .value {
-      font-size: 11px;
-      color: #555;
-      width: 40px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .helpbox {
-      font-size: 11px;
-      line-height: 1.4;
-      color: #444;
-      background: #f7f7f7;
-      border-left: 3px solid #bbb;
-      padding: 8px 10px;
-      border-radius: 4px;
-      margin-top: 4px;
-    }
-
-    .helpbox p {
-      margin: 4px 0;
-    }
-
-    #contextTip {
-      background: #eef3ff;
-      border-left-color: #4b7bd8;
-    }
-
-    #presetText {
-      min-height: 80px;
-      resize: vertical;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      padding: 4px 6px;
-      background: #fafafa;
-      margin-top: 4px;
-      box-sizing: border-box;
-      font-size: 11px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-
-    /* rechter Bereich mit großer Vorschau */
-    #canvasWrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 16px;
-      box-sizing: border-box;
-    }
-
-    #mainPreviewLabel {
-      font-size: 12px;
-      color: #555;
-    }
-
-    canvas {
-      background: #fff;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-      max-width: 100%;
-      max-height: 100%;
-    }
-
-    /* Fern-Vorschau */
-    #previewContainer {
-      margin-top: 4px;
-    }
-
-    .preview-block {
-      font-size: 11px;
-      text-align: center;
-    }
-
-    .preview-block canvas {
-      margin-top: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      background: #fff;
-      max-width: 100%;
-    }
-  </style>
-
+  <link rel="stylesheet" href="style.css">
   <!-- jsPDF für PDF-Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QR-Code-Bibliothek -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div id="controls">
@@ -207,7 +30,13 @@
 
     <span class="section-title">Feineinstellung</span>
 
-    <label>Schriftgröße</label>
+    <label>
+      Schriftgröße
+      <span class="tooltip"
+        data-tip="Beeinflusst, wie dominant beide Wörter wirken. Größere Schrift verstärkt die Fernwirkung.">
+        ⓘ
+      </span>
+    </label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="fontSize" min="120" max="340" value="230" />
       <span class="value" id="fontSizeVal">230</span>
@@ -216,7 +45,13 @@
       <span>Klein</span><span>Groß</span>
     </div>
 
-    <label>Unschärfe Fern-Wort</label>
+    <label>
+      Unschärfe Fern-Wort
+      <span class="tooltip"
+        data-tip="Steuert, wie stark das Fern-Wort weichgezeichnet wird. Mehr Unschärfe ist besser für größere Räume.">
+        ⓘ
+      </span>
+    </label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="farBlur" min="2" max="20" value="15" />
       <span class="value" id="farBlurVal">15</span>
@@ -225,7 +60,13 @@
       <span>wenig</span><span>stark</span>
     </div>
 
-    <label>Stärke Nah-Kanten</label>
+    <label>
+      Stärke Nah-Kanten
+      <span class="tooltip"
+        data-tip="Wie kräftig die Konturen des Nah-Wortes sind. Zu stark kann beide Wörter sichtbar machen.">
+        ⓘ
+      </span>
+    </label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="nearStrength" min="10" max="80" value="40" />
       <span class="value" id="nearStrengthVal">40</span>
@@ -234,7 +75,13 @@
       <span>zart</span><span>kräftig</span>
     </div>
 
-    <label>Deckkraft Nah-Wort</label>
+    <label>
+      Deckkraft Nah-Wort
+      <span class="tooltip"
+        data-tip="Wie stark das Nah-Wort über dem Fern-Wort liegt. Hohe Werte erhöhen das Risiko bei Brillenträgern.">
+        ⓘ
+      </span>
+    </label>
     <div style="display:flex;align-items:center;gap:8px;">
       <input type="range" id="nearOpacity" min="5" max="70" value="60" />
       <span class="value" id="nearOpacityVal">60</span>
@@ -242,12 +89,6 @@
     <div class="row">
       <span>fast unsichtbar</span><span>deutlich</span>
     </div>
-
-    <span class="section-title">Hinweis</span>
-    <div id="contextTip" class="helpbox">
-      Stelle die Regler ein – hier erscheinen passende Tipps.
-    </div>
-
     <button id="renderBtn">Erzeugen</button>
 
     <span class="section-title">Fern-Vorschau</span>
@@ -258,16 +99,23 @@
       </div>
     </div>
 
-    
+    <span class="section-title">Hinweis</span>
+    <div id="contextTip" class="helpbox">
+      Stelle die Regler ein – hier erscheinen passende Tipps zu Wirkung, Einsatz, Publikum und Druck.
+    </div>
+
+
 
     <span class="section-title">Export</span>
     <button id="saveBtn">Einzelkarte (PNG)</button>
     <button id="saveA4Btn">DIN A4 – 2× A5 (PNG)</button>
     <button id="savePdfBtn">DIN A4 – PDF (2×A5 Vorder/Rück)</button>
+    <button id="saveTestQrPdfBtn">Testkarte mit QR (PDF)</button>
     <small>
       • <b>Einzelkarte (PNG)</b>: eine A5-Vorderseite.<br>
       • <b>DIN A4 – 2× A5 (PNG)</b>: zwei gleiche Vorderseiten untereinander.<br>
-      • <b>DIN A4 – PDF</b>: Seite 1 oben Hybridkarte, unten gleiche Karte mit Nah=Fern, Seite 2 zwei Rückseiten.
+      • <b>DIN A4 – PDF</b>: Seite 1 oben Hybridkarte, unten gleiche Karte mit Nah=Fern, Seite 2 zwei Rückseiten.<br>
+      • <b>Testkarte mit QR (PDF)</b>: eine Testkarte mit QR-Code, der dieses Preset in der Web-App lädt.
     </small>
 
     <span class="section-title">Preset Import/Export</span>
@@ -281,524 +129,36 @@
     <small>
       Wenn dir der Hybrid-Karten-Generator hilft, freue ich mich über einen Kaffee 😊
     </small>
+
+    <span class="section-title">Info & Anleitung</span>
+    <div class="info-box">
+      <p>
+        Hybrid-Karten Generator von <b>Tim Holzhausen</b>.<br>
+        Entwickelt zur praktischen Umsetzung des „100th Monkey“-Prinzips
+        für Bühne, Salon und Wohnzimmer.
+      </p>
+      <p>
+        <a href="Hybridkarten_Anleitung.pdf" target="_blank" rel="noopener">
+          📄 PDF-Anleitung öffnen
+        </a>
+      </p>
+      <p style="margin-top:4px;">
+        Fragen oder Feedback? – Am besten zusammen mit ein paar Beispielen aus der Praxis schicken.
+      </p>
+    </div>
+
+    <div id="appVersion">
+      Version 1.0.0 · Stand März 2025
+    </div>
   </div>
 
   <div id="canvasWrapper">
     <div id="mainPreviewLabel">
       Nah-Vorschau – Sicht des Zuschauers auf der Bühne
     </div>
-    <!-- DIN A5 quer bei ~300 dpi -->
     <canvas id="cardCanvas" width="2480" height="1748"></canvas>
   </div>
 
-  <script>
-    const canvas = document.getElementById("cardCanvas");
-    const ctx = canvas.getContext("2d");
-    const FONT_STACK = '"American Typewriter","Courier Prime","Courier New",monospace';
-
-    // Hintergrund mit Fallback: background_print.jpg → background.jpg
-    let bgReady = false;
-    let bgTriedSecond = false;
-    const bgImage = new Image();
-    bgImage.onload = () => {
-      bgReady = true;
-      renderCard();
-      updatePreview();
-    };
-    bgImage.onerror = () => {
-      if (!bgTriedSecond) {
-        bgTriedSecond = true;
-        bgImage.src = "background.jpg";
-      }
-    };
-    bgImage.src = "background_print.jpg";
-
-    function getParamsRaw() {
-      return {
-        farText: document.getElementById("farText").value || "",
-        nearText: document.getElementById("nearText").value || "",
-        fontSize: parseInt(document.getElementById("fontSize").value, 10),
-        farBlur: parseInt(document.getElementById("farBlur").value, 10),
-        nearStrength: parseInt(document.getElementById("nearStrength").value, 10) / 100,
-        nearOpacity: parseInt(document.getElementById("nearOpacity").value, 10) / 100
-      };
-    }
-
-    function getParams() {
-      return getParamsRaw();
-    }
-
-    // ---------- Rendering Hauptkarte ----------
-    function renderCardOnContext(targetCtx, farText, nearText, p) {
-      const w = canvas.width;
-      const h = canvas.height;
-
-      // Hintergrund
-      targetCtx.save();
-      targetCtx.setTransform(1, 0, 0, 1, 0, 0);
-      targetCtx.clearRect(0, 0, w, h);
-      targetCtx.fillStyle = "#ffffff";
-      targetCtx.fillRect(0, 0, w, h);
-
-      if (bgReady) {
-        targetCtx.globalAlpha = 0.8;
-        targetCtx.drawImage(bgImage, 0, 0, w, h);
-        targetCtx.globalAlpha = 1.0;
-      }
-      targetCtx.restore();
-
-      // leichte Aufhellung
-      targetCtx.save();
-      targetCtx.globalCompositeOperation = "overlay";
-      targetCtx.globalAlpha = 0.12;
-      targetCtx.fillStyle = "#ffffff";
-      targetCtx.fillRect(0, 0, w, h);
-      targetCtx.restore();
-
-      const centerX = w / 2;
-      const centerY = h / 2 + p.fontSize * 0.08;
-
-      // Fern-Text
-      targetCtx.save();
-      targetCtx.textAlign = "center";
-      targetCtx.textBaseline = "middle";
-      targetCtx.font = `900 ${p.fontSize}px ${FONT_STACK}`;
-      targetCtx.fillStyle = "#111111";
-      targetCtx.filter = `blur(${p.farBlur}px)`;
-      targetCtx.fillText(farText, centerX, centerY);
-      targetCtx.filter = "none";
-      targetCtx.restore();
-
-      // Nah-Text
-      if (nearText.trim() !== "") {
-        drawNearHighPass(
-          nearText,
-          centerX,
-          centerY,
-          p.fontSize,
-          p.nearStrength,
-          p.nearOpacity,
-          targetCtx
-        );
-      }
-    }
-
-    function renderCard() {
-      const p = getParams();
-      renderCardOnContext(ctx, p.farText, p.nearText, p);
-      updatePreview();
-    }
-
-    // High-Pass-Effekt für Nah-Wort
-    function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetCtx = ctx) {
-      const w = canvas.width;
-      const h = canvas.height;
-
-      const cOrig = document.createElement("canvas");
-      cOrig.width = w;
-      cOrig.height = h;
-      const octx = cOrig.getContext("2d");
-      octx.fillStyle = "#ffffff";
-      octx.fillRect(0, 0, w, h);
-      octx.font = `900 ${fontSize}px ${FONT_STACK}`;
-      octx.textAlign = "center";
-      octx.textBaseline = "middle";
-      octx.fillStyle = "#000000";
-      octx.fillText(text, x, y);
-
-      const cBlur = document.createElement("canvas");
-      cBlur.width = w;
-      cBlur.height = h;
-      const bctx = cBlur.getContext("2d");
-      bctx.fillStyle = "#ffffff";
-      bctx.fillRect(0, 0, w, h);
-      bctx.filter = "blur(4px)";
-      bctx.font = octx.font;
-      bctx.textAlign = "center";
-      bctx.textBaseline = "middle";
-      bctx.fillStyle = "#000000";
-      bctx.fillText(text, x, y);
-      bctx.filter = "none";
-
-      const origData = octx.getImageData(0, 0, w, h);
-      const blurData = bctx.getImageData(0, 0, w, h);
-      const outData = octx.createImageData(w, h);
-
-      const od = origData.data;
-      const bd = blurData.data;
-      const out = outData.data;
-
-      for (let i = 0; i < od.length; i += 4) {
-        const origGray = (od[i] + od[i + 1] + od[i + 2]) / 3;
-        const blurGray = (bd[i] + bd[i + 1] + bd[i + 2]) / 3;
-        const edge = Math.abs(origGray - blurGray);
-        const alpha = Math.max(0, Math.min(255, edge * (1 + strength * 2)));
-        out[i] = 0;
-        out[i + 1] = 0;
-        out[i + 2] = 0;
-        out[i + 3] = alpha;
-      }
-
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = w;
-      tempCanvas.height = h;
-      const tctx = tempCanvas.getContext("2d");
-      tctx.putImageData(outData, 0, 0);
-
-      targetCtx.save();
-      targetCtx.globalAlpha = globalOpacity;
-      targetCtx.drawImage(tempCanvas, 0, 0);
-      targetCtx.restore();
-    }
-
-    // ---------- Fern-Vorschau ----------
-    function updatePreview() {
-      const farCanvas = document.getElementById("previewFar");
-      if (!farCanvas) return;
-
-      const fctx = farCanvas.getContext("2d");
-      const fw = farCanvas.width;
-      const fh = farCanvas.height;
-
-      fctx.clearRect(0, 0, fw, fh);
-
-      const scale = Math.min(fw / canvas.width, fh / canvas.height);
-      const drawW = canvas.width * scale;
-      const drawH = canvas.height * scale;
-      const dx = (fw - drawW) / 2;
-      const dy = (fh - drawH) / 2;
-
-      fctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, dx, dy, drawW, drawH);
-    }
-
-    // ---------- PNG Export ----------
-    function saveSingleCard() {
-      try {
-        renderCard();
-        const dataURL = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.download = "hybrid-karte-A5.png";
-        link.href = dataURL;
-        link.click();
-      } catch (e) {
-        alert(
-          "Export wird vom Browser blockiert.\n\n" +
-          "Bitte die HTML-Datei über einen lokalen Webserver öffnen (z.B. python -m http.server)."
-        );
-      }
-    }
-
-    function saveA4Sheet() {
-      try {
-        const a4Canvas = document.createElement("canvas");
-        a4Canvas.width = 2480;
-        a4Canvas.height = 3508;
-        const a4ctx = a4Canvas.getContext("2d");
-
-        a4ctx.fillStyle = "#ffffff";
-        a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
-
-        renderCard();
-        a4ctx.drawImage(canvas, 0, 0);
-
-        const gap = 12;
-        const y2 = canvas.height + gap;
-        if (y2 + canvas.height <= a4Canvas.height) {
-          a4ctx.drawImage(canvas, 0, y2);
-        }
-
-        const link = document.createElement("a");
-        link.download = "hybrid-karte-DIN-A4-2xA5.png";
-        link.href = a4Canvas.toDataURL("image/png");
-        link.click();
-      } catch (e) {
-        alert(
-          "Export wird vom Browser blockiert.\n\n" +
-          "Bitte die HTML-Datei über einen lokalen Webserver öffnen (z.B. python -m http.server)."
-        );
-      }
-    }
-
-    // ---------- PDF Export ----------
-    function drawBgRect(ctxBg, x, y, w, h) {
-      ctxBg.save();
-      ctxBg.fillStyle = "#ffffff";
-      ctxBg.fillRect(x, y, w, h);
-      if (bgReady) {
-        ctxBg.globalAlpha = 0.8;
-        ctxBg.drawImage(bgImage, x, y, w, h);
-        ctxBg.globalAlpha = 1.0;
-      }
-      ctxBg.globalCompositeOperation = "overlay";
-      ctxBg.globalAlpha = 0.12;
-      ctxBg.fillStyle = "#ffffff";
-      ctxBg.fillRect(x, y, w, h);
-      ctxBg.restore();
-    }
-
-    function safeFileName(str) {
-      return (str || "Hybrid")
-        .trim()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "")
-        .substring(0, 40);
-    }
-
-    function savePdfA4() {
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        alert("jsPDF konnte nicht geladen werden.");
-        return;
-      }
-      const { jsPDF } = window.jspdf;
-
-      const p = getParamsRaw();
-      const cardW = canvas.width;
-      const cardH = canvas.height;
-      const gap = 12;
-
-      // Seite 1: zwei Vorderseiten
-      const a4Canvas = document.createElement("canvas");
-      a4Canvas.width = 2480;
-      a4Canvas.height = 3508;
-      const a4ctx = a4Canvas.getContext("2d");
-      a4ctx.fillStyle = "#ffffff";
-      a4ctx.fillRect(0, 0, a4Canvas.width, a4Canvas.height);
-
-      // oben: aktuelle Hybridkarte
-      renderCard();
-      a4ctx.drawImage(canvas, 0, 0);
-
-      // unten: Nah = Fern, gleiche Settings
-      const tmpCanvas = document.createElement("canvas");
-      tmpCanvas.width = cardW;
-      tmpCanvas.height = cardH;
-      const tmpCtx = tmpCanvas.getContext("2d");
-
-      const p2 = {
-        farText: p.farText,
-        nearText: p.farText,
-        fontSize: p.fontSize,
-        farBlur: p.farBlur,
-        nearStrength: p.nearStrength,
-        nearOpacity: p.nearOpacity
-      };
-      renderCardOnContext(tmpCtx, p2.farText, p2.nearText, p2);
-
-      const y2 = cardH + gap;
-      a4ctx.drawImage(tmpCanvas, 0, y2);
-
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const imgData1 = a4Canvas.toDataURL("image/jpeg", 1.0);
-      pdf.addImage(imgData1, "JPEG", 0, 0, 210, 297);
-
-      // Seite 2: Rückseiten
-      const backCanvas = document.createElement("canvas");
-      backCanvas.width = 2480;
-      backCanvas.height = 3508;
-      const backCtx = backCanvas.getContext("2d");
-      backCtx.fillStyle = "#ffffff";
-      backCtx.fillRect(0, 0, backCanvas.width, backCanvas.height);
-
-      drawBgRect(backCtx, 0, 0, cardW, cardH);
-      drawBgRect(backCtx, 0, y2, cardW, cardH);
-
-      const imgData2 = backCanvas.toDataURL("image/jpeg", 1.0);
-      pdf.addPage();
-      pdf.addImage(imgData2, "JPEG", 0, 0, 210, 297);
-
-      const far = document.getElementById("farText").value || "Hybrid";
-      const fileName = "Hybrid-" + safeFileName(far) + ".pdf";
-      pdf.save(fileName);
-    }
-
-    // ---------- automatische Nah-Wort-Erzeugung ----------
-    const similarMap = {
-      "a":"e","b":"h","c":"e","d":"cl","e":"c","f":"t","g":"q","h":"n","i":"l","j":"i","k":"h",
-      "l":"i","m":"rn","n":"m","o":"a","p":"q","q":"p","r":"n","s":"z","t":"f","u":"v","v":"u",
-      "w":"vv","x":"k","y":"v","z":"s",
-      "ä":"a","ö":"o","ü":"u",
-      "A":"E","B":"H","C":"E","D":"Cl","E":"C","F":"T","G":"Q","H":"N","I":"L","J":"I","K":"H",
-      "L":"I","M":"RN","N":"M","O":"A","P":"Q","Q":"P","R":"N","S":"Z","T":"F","U":"V","V":"U",
-      "W":"VV","X":"K","Y":"V","Z":"S",
-      "Ä":"A","Ö":"O","Ü":"U"
-    };
-
-    function transformChar(ch) {
-      return similarMap[ch] || ch;
-    }
-
-    function generateNearFromFar(str) {
-      return str.split(/(\s+)/).map(token => {
-        if (token.trim() === "") return token;
-        const chars = Array.from(token);
-        if (chars.length <= 2) return token;
-        const first = chars[0];
-        const last = chars[chars.length - 1];
-        const middle = chars.slice(1, -1).map(transformChar).join("");
-        return first + middle + last;
-      }).join("");
-    }
-
-    // ---------- Slider-Anzeigen ----------
-    function updateSliderLabel(id) {
-      const slider = document.getElementById(id);
-      const label = document.getElementById(id + "Val");
-      if (slider && label) label.textContent = slider.value;
-    }
-
-    function updateAllSliderLabels() {
-      ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(updateSliderLabel);
-    }
-
-    // ---------- Kontextuelle Tipps ----------
-    function updateContextTip() {
-      const tipBox = document.getElementById("contextTip");
-      if (!tipBox) return;
-
-      const fs = parseInt(document.getElementById("fontSize").value, 10);
-      const fb = parseInt(document.getElementById("farBlur").value, 10);
-      const ns = parseInt(document.getElementById("nearStrength").value, 10);
-      const no = parseInt(document.getElementById("nearOpacity").value, 10);
-      const far = document.getElementById("farText").value.trim();
-      const near = document.getElementById("nearText").value.trim();
-      const auto = document.getElementById("autoNear").checked;
-
-      let tips = [];
-
-      if (fb < 8) {
-        tips.push("Unschärfe Fern-Wort ist sehr niedrig – das Nah-Wort könnte auch aus der Entfernung sichtbar sein.");
-      }
-      if (fb > 16) {
-        tips.push("Hohe Unschärfe – gut für größere Räume oder älteres Publikum.");
-      }
-      if (no > 60) {
-        tips.push("Hohe Deckkraft des Nah-Wortes – Zuschauer mit guter Nahsicht oder Brille könnten beide Worte erkennen.");
-      }
-      if (ns < 25) {
-        tips.push("Nah-Kanten sind sehr zart – nah vor dem Gesicht eventuell schwer lesbar.");
-      }
-      if (far && near && far.length !== near.length) {
-        tips.push("Fern- und Nah-Wort haben unterschiedliche Länge – das kann den Effekt etwas schwächen.");
-      }
-      if (auto) {
-        tips.push("Automatische Nah-Wort-Erzeugung ist aktiv – ideal zum schnellen Ausprobieren.");
-      }
-
-      if (tips.length === 0) {
-        tipBox.innerHTML = "✅ Einstellungen wirken ausgewogen. Jetzt testweise drucken und im echten Raum ausprobieren.";
-      } else {
-        tipBox.innerHTML = "💡 <b>Tipp:</b><br>" + tips.slice(0, 2).join("<br>");
-      }
-    }
-
-    // ---------- Preset Import/Export ----------
-    function exportPreset() {
-      const p = getParamsRaw();
-      const preset = {
-        farText: document.getElementById("farText").value,
-        nearText: document.getElementById("nearText").value,
-        fontSize: p.fontSize,
-        farBlur: p.farBlur,
-        nearStrength: parseInt(document.getElementById("nearStrength").value, 10),
-        nearOpacity: parseInt(document.getElementById("nearOpacity").value, 10),
-        autoNear: document.getElementById("autoNear").checked
-      };
-      const json = JSON.stringify(preset);
-      const field = document.getElementById("presetText");
-      field.value = json;
-      alert("Preset exportiert.\n\nDiesen Text kopieren und speichern.");
-    }
-
-    function importPreset() {
-      const field = document.getElementById("presetText");
-      if (!field.value.trim()) {
-        alert("Kein Preset im Feld.");
-        return;
-      }
-      let preset;
-      try {
-        preset = JSON.parse(field.value);
-      } catch (e) {
-        alert("Konnte Preset nicht lesen (ungültiges JSON).");
-        return;
-      }
-
-      const farInput  = document.getElementById("farText");
-      const nearInput = document.getElementById("nearText");
-      const autoNearCheckbox = document.getElementById("autoNear");
-
-      if (preset.farText !== undefined) farInput.value = preset.farText;
-      if (preset.nearText !== undefined) nearInput.value = preset.nearText;
-
-      autoNearCheckbox.checked = !!preset.autoNear;
-
-      if (preset.fontSize !== undefined) document.getElementById("fontSize").value = preset.fontSize;
-      if (preset.farBlur !== undefined) document.getElementById("farBlur").value = preset.farBlur;
-      if (preset.nearStrength !== undefined) document.getElementById("nearStrength").value = preset.nearStrength;
-      if (preset.nearOpacity !== undefined) document.getElementById("nearOpacity").value = preset.nearOpacity;
-
-      updateAllSliderLabels();
-      renderCard();
-      updateContextTip();
-    }
-
-    // ---------- Init & Events ----------
-    window.addEventListener("load", () => {
-      const farInput  = document.getElementById("farText");
-      const nearInput = document.getElementById("nearText");
-      const autoNearCheckbox = document.getElementById("autoNear");
-
-      // initial Nah-Wort
-      nearInput.value = generateNearFromFar(farInput.value);
-
-      farInput.addEventListener("input", () => {
-        if (autoNearCheckbox.checked) {
-          nearInput.value = generateNearFromFar(farInput.value);
-        }
-        renderCard();
-        updateContextTip();
-      });
-
-      nearInput.addEventListener("input", () => {
-        autoNearCheckbox.checked = false;
-        renderCard();
-        updateContextTip();
-      });
-
-      autoNearCheckbox.addEventListener("change", () => {
-        if (autoNearCheckbox.checked) {
-          nearInput.value = generateNearFromFar(farInput.value);
-          renderCard();
-        }
-        updateContextTip();
-      });
-
-      document.getElementById("renderBtn").addEventListener("click", () => {
-        renderCard();
-        updateContextTip();
-      });
-      document.getElementById("saveBtn").addEventListener("click", saveSingleCard);
-      document.getElementById("saveA4Btn").addEventListener("click", saveA4Sheet);
-      document.getElementById("savePdfBtn").addEventListener("click", savePdfA4);
-      document.getElementById("exportPresetBtn").addEventListener("click", exportPreset);
-      document.getElementById("importPresetBtn").addEventListener("click", importPreset);
-      document.getElementById("donateBtn").addEventListener("click", () => {
-        window.open("https://www.paypal.com/paypalme/timholzhausen", "_blank", "noopener");
-      });
-
-      ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(id => {
-        const slider = document.getElementById(id);
-        slider.addEventListener("input", () => {
-          updateSliderLabel(id);
-          renderCard();
-          updateContextTip();
-        });
-      });
-
-      updateAllSliderLabels();
-      renderCard();
-      updateContextTip();
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

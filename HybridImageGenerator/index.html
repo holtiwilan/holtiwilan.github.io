@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Hybrid-Karte – Nah/Fern-Wort</title>
   <style>
-    body {
+   body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f3f3f3;
@@ -86,18 +86,26 @@
     }
 
     #donateBtn {
-      background: #ffc439;   /* klassisches PayPal-Gelb */
+      background: #ffc439;
       color: #111;
       font-weight: 600;
     }
 
+    /* RECHTER BEREICH MIT HAUPTVORSCHAU */
     #canvasWrapper {
       flex: 1;
       display: flex;
+      flex-direction: column;   /* neu: Label über Canvas */
       align-items: center;
       justify-content: center;
+      gap: 8px;
       padding: 16px;
       box-sizing: border-box;
+    }
+
+    #mainPreviewLabel {
+      font-size: 12px;
+      color: #555;
     }
 
     canvas {
@@ -252,9 +260,12 @@
     </small>
   </div>
 
-  <div id="canvasWrapper">
-    <canvas id="cardCanvas" width="2480" height="1748"></canvas>
+<div id="canvasWrapper">
+  <div id="mainPreviewLabel">
+    Nah-Vorschau – Sicht des Zuschauers auf der Bühne
   </div>
+  <canvas id="cardCanvas" width="2480" height="1748"></canvas>
+</div>
 
   <script>
     const canvas = document.getElementById("cardCanvas");

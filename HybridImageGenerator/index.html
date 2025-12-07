@@ -157,6 +157,22 @@
       font-size: 11px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
+
+
+    .helpbox {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #444;
+  background: #f7f7f7;
+  border-left: 3px solid #bbb;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+.helpbox p {
+  margin: 6px 0;
+}
+
   </style>
 
   <!-- jsPDF für PDF-Export -->
@@ -252,6 +268,26 @@
       Export schreibt die aktuellen Werte in das Feld. Text kopieren und separat speichern.<br>
       Später den Text wieder einfügen und „Einstellungen importieren“ klicken.
     </small>
+<span class="section-title">Kurzanleitung & Tipps</span>
+<div class="helpbox">
+  <p><b>Grundprinzip</b><br>
+  Diese Karten zeigen zwei unterschiedliche Worte – eines aus der Nähe (Zuschauer),
+  eines aus der Entfernung (Publikum).</p>
+
+  <p><b>Empfohlenes Vorgehen</b><br>
+  • Drucke mehrere Varianten derselben Karte.<br>
+  • Teste die Karten immer im echten Raum – nicht nur am Bildschirm.</p>
+
+  <p><b>Wichtige Praxis-Tipps</b><br>
+  • Keine Zuschauer mit Brille oder sehr guter Nahsicht auswählen.<br>
+  • Besonders bei älterem Publikum muss der Effekt stärker eingestellt sein.<br>
+  • Aus sehr kurzer Distanz wird oft das „normale“ Wort gelesen.<br>
+  • Achte darauf, dass unbeteiligte Zuschauer nicht zu nah sitzen.</p>
+
+  <p><b>Faustregel</b><br>
+  Lieber etwas zu stark einstellen und testen,
+  als einmal zu schwach – dann ist der Effekt weg.</p>
+</div>
 
     <span class="section-title">Unterstützen</span>
     <button id="donateBtn">Per PayPal spenden</button>
@@ -284,6 +320,14 @@
       }
     };
     bgImage.src = "background.jpg";
+
+function safeFileName(str){
+  return str
+    .trim()
+    .replace(/\s+/g, "-")          // Leerzeichen → -
+    .replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "") // Sonderzeichen raus
+    .substring(0, 40);             // nicht zu lang
+}
 
     function getParamsRaw() {
       return {
@@ -570,7 +614,9 @@
       pdf.addPage();
       pdf.addImage(imgData2, "JPEG", 0, 0, 210, 297);
 
-      pdf.save("hybrid-karten.pdf");
+     const far = document.getElementById("farText").value || "Hybrid";
+      const fileName = "Hybrid-" + safeFileName(far) + ".pdf";
+      pdf.save(fileName);
     }
 
     // automatische Nah-Wort-Erzeugung

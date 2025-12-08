@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hybrid-Karte – Nah/Fern-Wort</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- jsPDF für PDF-Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QR-Code-Bibliothek -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div id="controls">
+    <h1>Hybrid-Karte</h1>
+    <small>
+      1. Fern-Wort eingeben – Nah-Wort wird automatisch „verfremdet“.<br>
+      2. Regler anpassen, bis Nah- und Fernwirkung passen.<br>
+      3. Mit den Export-Buttons druckfertige Dateien erzeugen.
+    </small>
+
+    <label>Fern-Wort (Publikum)</label>
+    <input type="text" id="farText" value="Zauberstab" />
+
+    <label>Nah-Wort (Zuschauer nah)</label>
+    <input type="text" id="nearText" />
+    <div style="margin-top:4px;font-size:11px;display:flex;align-items:center;gap:6px;">
+      <input type="checkbox" id="autoNear" checked />
+      <span>Nah-Wort automatisch aus Fern-Wort erzeugen</span>
+    </div>
+
+    <span class="section-title">Feineinstellung</span>
+
+    <label>
+      Schriftgröße
+      <span class="tooltip"
+        data-tip="Beeinflusst, wie dominant beide Wörter wirken. Größere Schrift verstärkt die Fernwirkung.">
+        ⓘ
+      </span>
+    </label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="fontSize" min="120" max="340" value="230" />
+      <span class="value" id="fontSizeVal">230</span>
+    </div>
+    <div class="row">
+      <span>Klein</span><span>Groß</span>
+    </div>
+
+    <label>
+      Unschärfe Fern-Wort
+      <span class="tooltip"
+        data-tip="Steuert, wie stark das Fern-Wort weichgezeichnet wird. Mehr Unschärfe ist besser für größere Räume.">
+        ⓘ
+      </span>
+    </label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="farBlur" min="2" max="20" value="15" />
+      <span class="value" id="farBlurVal">15</span>
+    </div>
+    <div class="row">
+      <span>wenig</span><span>stark</span>
+    </div>
+
+    <label>
+      Stärke Nah-Kanten
+      <span class="tooltip"
+        data-tip="Wie kräftig die Konturen des Nah-Wortes sind. Zu stark kann beide Wörter sichtbar machen.">
+        ⓘ
+      </span>
+    </label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="nearStrength" min="10" max="80" value="40" />
+      <span class="value" id="nearStrengthVal">40</span>
+    </div>
+    <div class="row">
+      <span>zart</span><span>kräftig</span>
+    </div>
+
+    <label>
+      Deckkraft Nah-Wort
+      <span class="tooltip"
+        data-tip="Wie stark das Nah-Wort über dem Fern-Wort liegt. Hohe Werte erhöhen das Risiko bei Brillenträgern.">
+        ⓘ
+      </span>
+    </label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="nearOpacity" min="5" max="70" value="60" />
+      <span class="value" id="nearOpacityVal">60</span>
+    </div>
+    <div class="row">
+      <span>fast unsichtbar</span><span>deutlich</span>
+    </div>
+    <button id="renderBtn">Erzeugen</button>
+
+    <span class="section-title">Fern-Vorschau</span>
+    <div id="previewContainer">
+      <div class="preview-block">
+        <canvas id="previewFar" width="420" height="296"></canvas>
+        <div>Publikums-Sicht (verkleinert)</div>
+      </div>
+    </div>
+
+    <span class="section-title">Hinweis</span>
+    <div id="contextTip" class="helpbox">
+      Stelle die Regler ein – hier erscheinen passende Tipps zu Wirkung, Einsatz, Publikum und Druck.
+    </div>
+
+
+
+    <span class="section-title">Export</span>
+    <button id="saveBtn">Einzelkarte (PNG)</button>
+    <button id="saveA4Btn">DIN A4 – 2× A5 (PNG)</button>
+    <button id="savePdfBtn">DIN A4 – PDF (2×A5 Vorder/Rück)</button>
+    <button id="saveTestQrPdfBtn">Testkarte mit QR (PDF)</button>
+    <small>
+      • <b>Einzelkarte (PNG)</b>: eine A5-Vorderseite.<br>
+      • <b>DIN A4 – 2× A5 (PNG)</b>: zwei gleiche Vorderseiten untereinander.<br>
+      • <b>DIN A4 – PDF</b>: Seite 1 oben Hybridkarte, unten gleiche Karte mit Nah=Fern, Seite 2 zwei Rückseiten.<br>
+      • <b>Testkarte mit QR (PDF)</b>: eine Testkarte mit QR-Code, der dieses Preset in der Web-App lädt.
+    </small>
+
+<span class="section-title">Preset Import/Export</span>
+<textarea id="presetText" rows="5"
+  placeholder='Hier erscheinen deine Einstellungen als JSON, z.B. {"fontSize":230,...}'></textarea>
+<button id="exportPresetBtn">Einstellungen exportieren</button>
+<button id="importPresetBtn">Einstellungen importieren</button>
+<button id="sharePresetBtn">Teilen (Link kopieren)</button>
+
+
+    <span class="section-title">Unterstützen</span>
+    <button id="donateBtn">Per PayPal spenden</button>
+    <small>
+      Wenn dir der Hybrid-Karten-Generator hilft, freue ich mich über einen Kaffee 😊
+    </small>
+
+    <span class="section-title">Info & Anleitung</span>
+    <div class="info-box">
+      <p>
+        Hybrid-Karten Generator von <b>Tim Holzhausen</b>.<br>
+        Entwickelt zur praktischen Umsetzung des „100th Monkey“-Prinzips
+        für Bühne, Salon und Wohnzimmer.
+      </p>
+      <p>
+        <a href="Hybridkarten_Anleitung.pdf" target="_blank" rel="noopener">
+          📄 PDF-Anleitung öffnen
+        </a>
+      </p>
+      <p style="margin-top:4px;">
+        Fragen oder Feedback? – Am besten zusammen mit ein paar Beispielen aus der Praxis schicken.
+      </p>
+    </div>
+
+    <div id="appVersion">
+      Version 1.0.0 · Stand Dezember 2025
+    </div>
+  </div>
+
+  <div id="canvasWrapper">
+    <div id="mainPreviewLabel">
+      Nah-Vorschau – Sicht des Zuschauers auf der Bühne
+    </div>
+    <canvas id="cardCanvas" width="2480" height="1748"></canvas>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

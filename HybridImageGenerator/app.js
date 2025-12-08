@@ -1,45 +1,52 @@
-// DOM-Referenzen
-let fontSizeEl, farBlurEl, nearStrengthEl, nearOpacityEl, autoNearEl;
+// app.js – Hybridkarten App mit Mehrsprachigkeit, Fern-Halo, Nah-Füllung und Background-Auswahl
 
-// Canvas & Font
+let fontSizeEl, farBlurEl, farHaloEl, nearStrengthEl, nearOpacityEl, nearFillEl, autoNearEl;
+let currentLang = window.I18N ? window.I18N.defaultLang : "de";
+
 const canvas = document.getElementById("cardCanvas");
 const ctx = canvas.getContext("2d");
+
 const FONT_STACK = '"American Typewriter","Courier Prime","Courier New",monospace';
 
-// Hintergrund mit Fallback
-let bgReady = false;
-let bgTriedSecond = false;
-const bgImage = new Image();
-bgImage.onload = () => {
-  bgReady = true;
-  // Erst rendern, wenn Init fertig ist – zur Sicherheit checken wir auf DOM-Elemente
-  if (document.getElementById("fontSize")) {
-    renderCard();
-    updatePreview();
-  }
-};
-bgImage.onerror = () => {
-  if (!bgTriedSecond) {
-    bgTriedSecond = true;
-    bgImage.src = "background.jpg";
-  }
-};
-bgImage.src = "background_print.jpg";
+// ---------- Hintergrund-Handling mit Auswahl ----------
 
-// Parameter holen – NICHT mehr direkt auf fontSizeEl etc. vertrauen
+let bgReady = false;
+let bgImage = null;
+let currentBgFile = "background_print.jpg";
+
+function loadBackground(file) {
+  bgReady = false;
+  bgImage = new Image();
+  bgImage.onload = () => {
+    bgReady = true;
+    renderCard();
+  };
+  bgImage.onerror = () => {
+    bgReady = false;
+    renderCard();
+  };
+  bgImage.src = file;
+}
+
+// ---------- Parameter lesen ----------
+
 function getParamsRaw() {
-  const fontEl = fontSizeEl || document.getElementById("fontSize");
-  const blurEl = farBlurEl || document.getElementById("farBlur");
-  const nsEl   = nearStrengthEl || document.getElementById("nearStrength");
-  const noEl   = nearOpacityEl || document.getElementById("nearOpacity");
+  const fsEl = fontSizeEl || document.getElementById("fontSize");
+  const fbEl = farBlurEl || document.getElementById("farBlur");
+  const fhEl = farHaloEl || document.getElementById("farHalo");
+  const nsEl = nearStrengthEl || document.getElementById("nearStrength");
+  const noEl = nearOpacityEl || document.getElementById("nearOpacity");
+  const nfEl = nearFillEl || document.getElementById("nearFill");
 
   return {
     farText: document.getElementById("farText").value || "",
     nearText: document.getElementById("nearText").value || "",
-    fontSize: parseInt((fontEl && fontEl.value) || "230", 10),
-    farBlur: parseInt((blurEl && blurEl.value) || "15", 10),
+    fontSize: parseInt((fsEl && fsEl.value) || "230", 10),
+    farBlur: parseInt((fbEl && fbEl.value) || "15", 10),
+    farHalo: parseInt((fhEl && fhEl.value) || "60", 10) / 100,
     nearStrength: parseInt((nsEl && nsEl.value) || "40", 10) / 100,
-    nearOpacity: parseInt((noEl && noEl.value) || "60", 10) / 100
+    nearOpacity: parseInt((noEl && noEl.value) || "60", 10) / 100,
+    nearFill: parseInt((nfEl && nfEl.value) || "40", 10) / 100
   };
 }
 
@@ -47,7 +54,38 @@ function getParams() {
   return getParamsRaw();
 }
 
-// Karte auf gewünschten Kontext rendern
+// ---------- Zeichnen Fern-Wort mit Halo ----------
+
+function drawFarTextWithHalo(targetCtx, text, x, y, fontSize, blur, haloStrength) {
+  const halo = Math.max(0, Math.min(1, haloStrength || 0.6));
+  const baseBlur = blur || 10;
+
+  targetCtx.save();
+  targetCtx.textAlign = "center";
+  targetCtx.textBaseline = "middle";
+  targetCtx.font = `900 ${fontSize}px ${FONT_STACK}`;
+
+  // 1️⃣ großer, weicher Halo
+  targetCtx.filter = `blur(${baseBlur * 2.0}px)`;
+  targetCtx.fillStyle = `rgba(0,0,0,${0.15 + 0.25 * halo})`;
+  targetCtx.fillText(text, x, y + fontSize * 0.02);
+
+  // 2️⃣ Körper
+  targetCtx.filter = `blur(${baseBlur * 1.1}px)`;
+  targetCtx.fillStyle = `rgba(0,0,0,${0.35 + 0.25 * halo})`;
+  targetCtx.fillText(text, x, y);
+
+  // 3️⃣ Kern
+  targetCtx.filter = `blur(${baseBlur * 0.6}px)`;
+  targetCtx.fillStyle = `rgba(0,0,0,${0.5 + 0.3 * halo})`;
+  targetCtx.fillText(text, x, y);
+
+  targetCtx.filter = "none";
+  targetCtx.restore();
+}
+
+// ---------- Render-Funktionen ----------
+
 function renderCardOnContext(targetCtx, farText, nearText, p) {
   const w = canvas.width;
   const h = canvas.height;
@@ -58,7 +96,7 @@ function renderCardOnContext(targetCtx, farText, nearText, p) {
   targetCtx.fillStyle = "#ffffff";
   targetCtx.fillRect(0, 0, w, h);
 
-  if (bgReady) {
+  if (bgReady && bgImage) {
     targetCtx.globalAlpha = 0.8;
     targetCtx.drawImage(bgImage, 0, 0, w, h);
     targetCtx.globalAlpha = 1.0;
@@ -75,16 +113,18 @@ function renderCardOnContext(targetCtx, farText, nearText, p) {
   const centerX = w / 2;
   const centerY = h / 2 + p.fontSize * 0.08;
 
-  targetCtx.save();
-  targetCtx.textAlign = "center";
-  targetCtx.textBaseline = "middle";
-  targetCtx.font = `900 ${p.fontSize}px ${FONT_STACK}`;
-  targetCtx.fillStyle = "#111111";
-  targetCtx.filter = `blur(${p.farBlur}px)`;
-  targetCtx.fillText(farText, centerX, centerY);
-  targetCtx.filter = "none";
-  targetCtx.restore();
+  // Fern-Wort mit Halo
+  drawFarTextWithHalo(
+    targetCtx,
+    farText,
+    centerX,
+    centerY,
+    p.fontSize,
+    p.farBlur,
+    p.farHalo
+  );
 
+  // Nah-Wort (High-Pass + Füllung)
   if (nearText.trim() !== "") {
     drawNearHighPass(
       nearText,
@@ -93,7 +133,8 @@ function renderCardOnContext(targetCtx, farText, nearText, p) {
       p.fontSize,
       p.nearStrength,
       p.nearOpacity,
-      targetCtx
+      targetCtx,
+      p.nearFill
     );
   }
 }
@@ -104,8 +145,8 @@ function renderCard() {
   updatePreview();
 }
 
-// High-Pass für Nah-Wort
-function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetCtx = ctx) {
+// High-Pass-Effekt für Nah-Wort + Innen-Füllung
+function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetCtx = ctx, fillOpacity = 0) {
   const w = canvas.width;
   const h = canvas.height;
 
@@ -164,6 +205,20 @@ function drawNearHighPass(text, x, y, fontSize, strength, globalOpacity, targetC
   targetCtx.globalAlpha = globalOpacity;
   targetCtx.drawImage(tempCanvas, 0, 0);
   targetCtx.restore();
+
+  // zusätzliche graue Innen-Füllung
+  if (fillOpacity > 0) {
+    targetCtx.save();
+    targetCtx.globalAlpha = Math.max(0, Math.min(1, fillOpacity));
+    targetCtx.filter = "blur(1.5px)";
+    targetCtx.font = `900 ${fontSize}px ${FONT_STACK}`;
+    targetCtx.textAlign = "center";
+    targetCtx.textBaseline = "middle";
+    targetCtx.fillStyle = "#777777";
+    targetCtx.fillText(text, x, y);
+    targetCtx.filter = "none";
+    targetCtx.restore();
+  }
 }
 
 // Fern-Vorschau
@@ -186,7 +241,8 @@ function updatePreview() {
   fctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, dx, dy, drawW, drawH);
 }
 
-// PNG-Export
+// ---------- Export-Helper ----------
+
 function saveSingleCard() {
   try {
     renderCard();
@@ -234,12 +290,11 @@ function saveA4Sheet() {
   }
 }
 
-// PDF-Export Standard
 function drawBgRect(ctxBg, x, y, w, h) {
   ctxBg.save();
   ctxBg.fillStyle = "#ffffff";
   ctxBg.fillRect(x, y, w, h);
-  if (bgReady) {
+  if (bgReady && bgImage) {
     ctxBg.globalAlpha = 0.8;
     ctxBg.drawImage(bgImage, x, y, w, h);
     ctxBg.globalAlpha = 1.0;
@@ -256,7 +311,7 @@ function safeFileName(str) {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9äöüÄÖÜß\-]/g, "")
-    .substring(0, 40);
+    .substring(0, 50);
 }
 
 function savePdfA4() {
@@ -291,8 +346,10 @@ function savePdfA4() {
     nearText: p.farText,
     fontSize: p.fontSize,
     farBlur: p.farBlur,
+    farHalo: p.farHalo,
     nearStrength: p.nearStrength,
-    nearOpacity: p.nearOpacity
+    nearOpacity: p.nearOpacity,
+    nearFill: p.nearFill
   };
   renderCardOnContext(tmpCtx, p2.farText, p2.nearText, p2);
 
@@ -322,7 +379,8 @@ function savePdfA4() {
   pdf.save(fileName);
 }
 
-// automatische Nah-Wort-Erzeugung
+// ---------- automatische Nah-Wort-Erzeugung ----------
+
 const similarMap = {
   "a":"e","b":"h","c":"e","d":"cl","e":"c","f":"t","g":"q","h":"n","i":"l","j":"i","k":"h",
   "l":"i","m":"rn","n":"m","o":"a","p":"q","q":"p","r":"n","s":"z","t":"f","u":"v","v":"u",
@@ -350,7 +408,8 @@ function generateNearFromFar(str) {
   }).join("");
 }
 
-// Slider-Anzeigen
+// ---------- Slider-Anzeigen ----------
+
 function updateSliderLabel(id) {
   const slider = document.getElementById(id);
   const label = document.getElementById(id + "Val");
@@ -358,16 +417,23 @@ function updateSliderLabel(id) {
 }
 
 function updateAllSliderLabels() {
-  ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(updateSliderLabel);
+  ["fontSize","farBlur","farHalo","nearStrength","nearOpacity","nearFill"].forEach(updateSliderLabel);
 }
 
-// Kontext-Hinweis (unverändert)
+// ---------- Kontext-Hinweis ----------
+
+function t(key) {
+  return window.I18N.get(currentLang, key);
+}
+
 function updateContextTip() {
   const tipBox = document.getElementById("contextTip");
   if (!tipBox) return;
 
   const fs = parseInt((fontSizeEl || document.getElementById("fontSize")).value, 10);
   const fb = parseInt((farBlurEl || document.getElementById("farBlur")).value, 10);
+  const fhRaw = parseInt((farHaloEl || document.getElementById("farHalo")).value, 10);
+  const fh = fhRaw / 100;
   const nsRaw = parseInt((nearStrengthEl || document.getElementById("nearStrength")).value, 10);
   const noRaw = parseInt((nearOpacityEl || document.getElementById("nearOpacity")).value, 10);
   const ns = nsRaw / 100;
@@ -377,101 +443,100 @@ function updateContextTip() {
   let lines = [];
 
   if (fs < 170) {
-    lines.push("🔹 <b>Schriftgröße:</b> eher klein – geeignet für nahes Publikum, weniger Fernwirkung.");
+    lines.push(t("ctx.fontSize.small"));
   } else if (fs < 260) {
-    lines.push("🔹 <b>Schriftgröße:</b> ausgewogen – gut für die meisten Bühnen- & Salon-Situationen.");
+    lines.push(t("ctx.fontSize.medium"));
   } else {
-    lines.push("🔹 <b>Schriftgröße:</b> sehr groß – starke Fernwirkung, ideal für größere Räume.");
+    lines.push(t("ctx.fontSize.large"));
   }
 
   if (fb < 8) {
-    lines.push("🔹 <b>Fern-Unschärfe:</b> gering – Fern-Wort sehr klar, Nah-Wort könnte auf Distanz sichtbar werden.");
+    lines.push(t("ctx.blur.low"));
   } else if (fb < 15) {
-    lines.push("🔹 <b>Fern-Unschärfe:</b> moderat – saubere Trennung zwischen Nah- und Fernsicht.");
+    lines.push(t("ctx.blur.medium"));
   } else {
-    lines.push("🔹 <b>Fern-Unschärfe:</b> stark – publikumsfreundlich, besonders bei größerem oder älterem Publikum.");
+    lines.push(t("ctx.blur.high"));
+  }
+
+  if (fh < 0.35) {
+    lines.push(t("ctx.halo.low"));
+  } else if (fh < 0.7) {
+    lines.push(t("ctx.halo.medium"));
+  } else {
+    lines.push(t("ctx.halo.high"));
   }
 
   if (ns < 0.25) {
-    lines.push("🔹 <b>Nah-Kanten:</b> sehr fein – subtiler Effekt, ganz nah evtl. schwer zu lesen.");
+    lines.push(t("ctx.nearStrength.low"));
   } else if (ns < 0.5) {
-    lines.push("🔹 <b>Nah-Kanten:</b> gut sichtbar – Nah-Wort klar, ohne die Fernwirkung zu stören.");
+    lines.push(t("ctx.nearStrength.medium"));
   } else {
-    lines.push("🔹 <b>Nah-Kanten:</b> sehr kräftig – Nah-Wort dominiert stark, erhöhtes Risiko bei guter Sehschärfe.");
+    lines.push(t("ctx.nearStrength.high"));
   }
 
   if (no < 0.35) {
-    lines.push("🔹 <b>Deckkraft:</b> niedrig – sehr sicher, Nah-Wort tritt dezent hervor.");
+    lines.push(t("ctx.opacity.low"));
   } else if (no < 0.6) {
-    lines.push("🔹 <b>Deckkraft:</b> ausgewogen – guter Kompromiss aus Sicherheit & Lesbarkeit.");
+    lines.push(t("ctx.opacity.medium"));
   } else {
-    lines.push("🔹 <b>Deckkraft:</b> hoch – Nah-Wort sehr präsent, Vorsicht bei Brillenträgern.");
+    lines.push(t("ctx.opacity.high"));
   }
 
   let riskScore = 0;
   if (fb < 8) riskScore += 2;
   if (no > 0.6) riskScore += 2;
   if (ns > 0.5) riskScore += 1;
+  if (fh < 0.35) riskScore += 1;
 
-  let riskText;
-  if (riskScore <= 1) {
-    riskText = "🟢 <b>Risikostufe:</b> niedrig – sehr bühnensicher eingestellt.";
-  } else if (riskScore <= 3) {
-    riskText = "🟡 <b>Risikostufe:</b> mittel – gut, aber vorher mit Testperson ausprobieren.";
+  let riskKey;
+  if (riskScore <= 1) riskKey = "ctx.risk.low";
+  else if (riskScore <= 3) riskKey = "ctx.risk.medium";
+  else riskKey = "ctx.risk.high";
+
+  let usecaseKey;
+  if (fs > 260 && fb > 14) usecaseKey = "ctx.usecase.large";
+  else if (fs > 200) usecaseKey = "ctx.usecase.medium";
+  else usecaseKey = "ctx.usecase.small";
+
+  let audienceKey;
+  if (no > 0.6 || ns > 0.5 || fb < 8 || fh < 0.35) {
+    audienceKey = "ctx.audience.careful";
   } else {
-    riskText = "🔴 <b>Risikostufe:</b> hoch – unbedingt mit Testpublikum prüfen, Brillenträger vermeiden.";
+    audienceKey = "ctx.audience.safe";
   }
 
-  let useCase;
-  if (fs > 260 && fb > 14) {
-    useCase = "🎭 <b>Einsatz:</b> Große Bühne / größerer Raum.";
-  } else if (fs > 200) {
-    useCase = "🎭 <b>Einsatz:</b> Bühne oder Salon.";
+  let printKey;
+  if (fb > 14 || fh > 0.7) {
+    printKey = "ctx.print.high";
   } else {
-    useCase = "🎭 <b>Einsatz:</b> Wohnzimmer / Close-Up.";
-  }
-
-  let audience;
-  if (no > 0.6 || ns > 0.5 || fb < 8) {
-    audience = "👓 <b>Publikum:</b> Keine sehr sehstarken Zuschauer oder Brillenträger für den Nah-Zuschauer auswählen.";
-  } else {
-    audience = "👓 <b>Publikum:</b> Weitgehend sicher für gemischtes Publikum.";
-  }
-
-  let printTip;
-  if (fb > 14) {
-    printTip = "🖨️ <b>Druck:</b> Hoher Kontrast/Fotodruck sinnvoll, auf jeden Fall Testdruck machen.";
-  } else {
-    printTip = "🖨️ <b>Druck:</b> Standard-Farbdruck reicht meist aus, trotzdem Testdruck empfohlen.";
+    printKey = "ctx.print.standard";
   }
 
   let presetTip = "";
-  if (fb >= 10 && fb <= 17 && no >= 0.4 && no <= 0.65 && ns >= 0.25 && ns <= 0.55) {
-    presetTip = "💾 <b>Preset-Tipp:</b> Diese Einstellung eignet sich gut als Bühnen-Preset – jetzt mit „Einstellungen exportieren“ sichern.";
+  if (fb >= 10 && fb <= 17 && no >= 0.4 && no <= 0.65 && ns >= 0.25 && ns <= 0.55 && fh >= 0.4 && fh <= 0.8) {
+    presetTip = t("ctx.preset.tip");
   }
 
   if (auto) {
-    lines.push("🔹 <b>Automatik:</b> Nah-Wort wird aus dem Fern-Wort erzeugt – ideal zum schnellen Experimentieren.");
+    lines.push(t("ctx.auto.on"));
   }
 
-  let exportTip;
-  if (riskScore <= 2 && fs >= 200) {
-    exportTip = "📄 <b>Export-Empfehlung:</b> Für den Auftritt den DIN A4 PDF-Export nutzen (2×A5 Vorder/Rück).";
-  } else {
-    exportTip = "📄 <b>Export-Empfehlung:</b> Zuerst mit „Einzelkarte (PNG)“ einen Testdruck machen.";
-  }
+  let exportKey;
+  if (riskScore <= 2 && fs >= 200) exportKey = "ctx.export.safe";
+  else exportKey = "ctx.export.test";
 
   tipBox.innerHTML =
     lines.join("<br>") +
     "<hr style='border:none;border-top:1px solid #ccc;margin:6px 0'>" +
-    riskText + "<br>" +
-    useCase + "<br>" +
-    audience + "<br>" +
-    printTip + (presetTip ? "<br>" + presetTip : "") + "<br>" +
-    exportTip;
+    t(riskKey) + "<br>" +
+    t(usecaseKey) + "<br>" +
+    t(audienceKey) + "<br>" +
+    t(printKey) + (presetTip ? "<br>" + presetTip : "") + "<br>" +
+    t(exportKey);
 }
 
-// Preset-Objekt
+// ---------- Presets ----------
+
 function getCurrentPresetObject() {
   const p = getParamsRaw();
   return {
@@ -479,13 +544,16 @@ function getCurrentPresetObject() {
     nearText: document.getElementById("nearText").value,
     fontSize: p.fontSize,
     farBlur: p.farBlur,
+    farHalo: parseInt((farHaloEl || document.getElementById("farHalo")).value, 10),
     nearStrength: parseInt((nearStrengthEl || document.getElementById("nearStrength")).value, 10),
     nearOpacity: parseInt((nearOpacityEl || document.getElementById("nearOpacity")).value, 10),
-    autoNear: autoNearEl && autoNearEl.checked
+    nearFill: parseInt((nearFillEl || document.getElementById("nearFill")).value, 10),
+    autoNear: autoNearEl && autoNearEl.checked,
+    lang: currentLang || "de",
+    background: currentBgFile || "background_print.jpg"
   };
 }
 
-// Preset Import/Export
 function exportPreset() {
   const preset = getCurrentPresetObject();
   const json = JSON.stringify(preset);
@@ -515,18 +583,33 @@ function importPreset() {
   if (preset.nearText !== undefined) nearInput.value = preset.nearText;
 
   if (typeof preset.autoNear === "boolean") autoNearEl.checked = preset.autoNear;
+  if (preset.lang && window.I18N.translations[preset.lang]) {
+    currentLang = preset.lang;
+    const langSelect = document.getElementById("langSelect");
+    if (langSelect) langSelect.value = currentLang;
+    setLanguage(currentLang);
+  }
 
   if (preset.fontSize !== undefined) fontSizeEl.value = preset.fontSize;
   if (preset.farBlur !== undefined) farBlurEl.value = preset.farBlur;
+  if (preset.farHalo !== undefined) farHaloEl.value = preset.farHalo;
   if (preset.nearStrength !== undefined) nearStrengthEl.value = preset.nearStrength;
   if (preset.nearOpacity !== undefined) nearOpacityEl.value = preset.nearOpacity;
+  if (preset.nearFill !== undefined) nearFillEl.value = preset.nearFill;
+
+  const bgSelect = document.getElementById("bgSelect");
+  if (preset.background && bgSelect) {
+    currentBgFile = preset.background;
+    bgSelect.value = currentBgFile;
+    loadBackground(currentBgFile);
+  }
 
   updateAllSliderLabels();
   renderCard();
   updateContextTip();
 }
 
-// --- Preset-Sharing per URL-Token & QR-Code ---
+// ---------- Preset-Sharing per URL ----------
 
 function encodePresetToToken(presetObj) {
   const json = JSON.stringify(presetObj);
@@ -552,7 +635,24 @@ function generatePresetLink() {
   return `${baseUrl}?preset=${token}`;
 }
 
-// Test-PDF mit QR-Preset – QR-Code als JPEG in das PDF einbetten
+function sharePresetLink() {
+  const url = generatePresetLink();
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        alert("Preset-Link wurde in die Zwischenablage kopiert.\n\nDiesen Link kannst du mit anderen teilen oder in deinen Notizen speichern.");
+      })
+      .catch(() => {
+        prompt("Preset-Link (bitte manuell kopieren):", url);
+      });
+  } else {
+    prompt("Preset-Link (bitte manuell kopieren):", url);
+  }
+}
+
+// ---------- Test-PDF mit QR ----------
+
 function saveTestPresetPdf() {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     alert("jsPDF konnte nicht geladen werden.");
@@ -565,15 +665,11 @@ function saveTestPresetPdf() {
 
   const { jsPDF } = window.jspdf;
 
-  // 1) Preset-Link erzeugen
   const presetUrl = generatePresetLink();
-  console.log("Testkarten-PDF, Preset-URL:", presetUrl);
 
-  // 2) Karte rendern und als JPEG holen
   renderCard();
   const cardImg = canvas.toDataURL("image/jpeg", 0.95);
 
-  // 3) QR-Code in einem versteckten DIV erzeugen
   const qrDiv = document.createElement("div");
   qrDiv.style.position = "absolute";
   qrDiv.style.left = "-9999px";
@@ -594,7 +690,6 @@ function saveTestPresetPdf() {
     return;
   }
 
-  // 4) QR-Canvas auf eigenes Canvas zeichnen und als JPEG exportieren
   const qrCanvas = document.createElement("canvas");
   qrCanvas.width = 256;
   qrCanvas.height = 256;
@@ -604,65 +699,98 @@ function saveTestPresetPdf() {
   qctx.drawImage(srcCanvas, 0, 0, 256, 256);
 
   const qrImgJpeg = qrCanvas.toDataURL("image/jpeg", 0.95);
-
-  // Aufräumen
   document.body.removeChild(qrDiv);
 
-  // 5) PDF-Seite aufbauen
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
   const pageWidth = 210;
   const pageHeight = 297;
 
-  // Karte oben mittig
   const cardWidthMm = 190;
   const cardHeightMm = cardWidthMm * (canvas.height / canvas.width);
   const cardX = (pageWidth - cardWidthMm) / 2;
   const cardY = 10;
   pdf.addImage(cardImg, "JPEG", cardX, cardY, cardWidthMm, cardHeightMm);
 
-  // QR-Code unten rechts
   const qrSizeMm = 40;
   const qrX = pageWidth - qrSizeMm - 15;
   const qrY = pageHeight - qrSizeMm - 30;
   pdf.addImage(qrImgJpeg, "JPEG", qrX, qrY, qrSizeMm, qrSizeMm);
 
-  // 6) Textblock mit Beschreibung + aktuellen Werten
   const far = document.getElementById("farText").value || "Hybrid";
   const fsVal = parseInt((fontSizeEl || document.getElementById("fontSize")).value, 10);
-  const fbVal = parseInt((farBlurEl   || document.getElementById("farBlur")).value, 10);
+  const fbVal = parseInt((farBlurEl || document.getElementById("farBlur")).value, 10);
+  const fhVal = parseInt((farHaloEl || document.getElementById("farHalo")).value, 10);
   const nsVal = parseInt((nearStrengthEl || document.getElementById("nearStrength")).value, 10);
-  const noVal = parseInt((nearOpacityEl  || document.getElementById("nearOpacity")).value, 10);
+  const nfVal = parseInt((nearFillEl || document.getElementById("nearFill")).value, 10);
+  const noVal = parseInt((nearOpacityEl || document.getElementById("nearOpacity")).value, 10);
   const auto  = autoNearEl && autoNearEl.checked;
 
   pdf.setFontSize(11);
-  pdf.text("Testkarte mit Hybrid-Preset", 15, cardY + cardHeightMm + 15);
+  pdf.text(t("pdf.test.title"), 15, cardY + cardHeightMm + 15);
   pdf.setFontSize(9);
-  pdf.text(`Fern-Wort: ${far}`, 15, cardY + cardHeightMm + 22);
-  pdf.text("QR-Code scannen, um dieses Preset", 15, cardY + cardHeightMm + 32);
-  pdf.text("im Hybrid-Karten-Generator zu laden.", 15, cardY + cardHeightMm + 37);
+  pdf.text(`${t("pdf.test.farLabel")} ${far}`, 15, cardY + cardHeightMm + 22);
+  pdf.text(t("pdf.test.line1"), 15, cardY + cardHeightMm + 32);
+  pdf.text(t("pdf.test.line2"), 15, cardY + cardHeightMm + 37);
 
-  // Parameter direkt mit draufdrucken
   let infoY = cardY + cardHeightMm + 47;
-  pdf.text(
-    `Schriftgröße: ${fsVal}   ·   Unschärfe Fern: ${fbVal}   ·   Stärke Nah-Kanten: ${nsVal}   ·   Deckkraft Nah: ${noVal}`,
-    15,
-    infoY
-  );
+  const paramLine = `FontSize: ${fsVal}  ·  Blur: ${fbVal}  ·  Halo: ${fhVal}  ·  Edge: ${nsVal}  ·  Fill: ${nfVal}  ·  Opacity: ${noVal}`;
+  pdf.text(paramLine, 15, infoY);
   infoY += 4;
-  pdf.text(
-    `Automatik Nah-Wort: ${auto ? "AN (aus Fern-Wort erzeugt)" : "AUS (manuell eingegeben)"}`,
-    15,
-    infoY
-  );
+  const autoText = auto ? t("pdf.test.autoOn") : t("pdf.test.autoOff");
+  pdf.text(autoText, 15, infoY);
 
-  // 7) Speichern
   const fileName = "Hybrid-Test-" + safeFileName(far) + ".pdf";
   pdf.save(fileName);
 }
 
+// ---------- Mehrsprachigkeit anwenden ----------
 
+function setLanguage(lang) {
+  if (!window.I18N || !window.I18N.translations[lang]) {
+    lang = window.I18N ? window.I18N.defaultLang : "de";
+  }
+  currentLang = lang;
+  document.documentElement.lang = lang;
 
-// Init
+  const root = document;
+
+  root.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const val = t(key);
+    if (val) el.textContent = val;
+  });
+
+  root.querySelectorAll("[data-i18n-html]").forEach(el => {
+    const key = el.getAttribute("data-i18n-html");
+    const val = t(key);
+    if (val) el.innerHTML = val;
+  });
+
+  root.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    const val = t(key);
+    if (val) el.setAttribute("placeholder", val);
+  });
+
+  root.querySelectorAll("[data-i18n-tip]").forEach(el => {
+    const key = el.getAttribute("data-i18n-tip");
+    const val = t(key);
+    if (val) el.setAttribute("data-tip", val);
+  });
+
+  updateContextTip();
+    // ✅ PDF-Link aktualisieren
+  updateManualLink(lang);
+}
+function updateManualLink(lang) {
+  const manualLink = document.getElementById("manualLink");
+  if (!manualLink) return;
+
+  manualLink.href = `Hybridkarten_Anleitung_${lang}.pdf`;
+}
+// ---------- Initialisierung ----------
+
 window.addEventListener("load", () => {
   const farInput  = document.getElementById("farText");
   const nearInput = document.getElementById("nearText");
@@ -670,27 +798,78 @@ window.addEventListener("load", () => {
 
   fontSizeEl = document.getElementById("fontSize");
   farBlurEl = document.getElementById("farBlur");
+  farHaloEl = document.getElementById("farHalo");
   nearStrengthEl = document.getElementById("nearStrength");
   nearOpacityEl = document.getElementById("nearOpacity");
+  nearFillEl = document.getElementById("nearFill");
+
+  const langSelect = document.getElementById("langSelect");
+  const bgSelect = document.getElementById("bgSelect");
 
   const params = new URLSearchParams(window.location.search);
   const presetToken = params.get("preset");
+  let presetFromUrl = null;
   if (presetToken) {
-    const obj = decodePresetFromToken(presetToken);
-    if (obj) {
-      if (obj.farText !== undefined) farInput.value = obj.farText;
-      if (obj.nearText !== undefined) nearInput.value = obj.nearText;
-      if (typeof obj.autoNear === "boolean") autoNearEl.checked = obj.autoNear;
+    presetFromUrl = decodePresetFromToken(presetToken);
+    if (presetFromUrl && presetFromUrl.lang && window.I18N.translations[presetFromUrl.lang]) {
+      currentLang = presetFromUrl.lang;
+    }
+  } else {
+    const storedLang = window.localStorage ? window.localStorage.getItem("hybrid_lang") : null;
+    if (storedLang && window.I18N.translations[storedLang]) {
+      currentLang = storedLang;
+    } else {
+      currentLang = window.I18N.defaultLang;
+    }
+  }
 
-      if (obj.fontSize !== undefined) fontSizeEl.value = obj.fontSize;
-      if (obj.farBlur !== undefined) farBlurEl.value = obj.farBlur;
-      if (obj.nearStrength !== undefined) nearStrengthEl.value = obj.nearStrength;
-      if (obj.nearOpacity !== undefined) nearOpacityEl.value = obj.nearOpacity;
+  if (langSelect) {
+    langSelect.value = currentLang;
+    langSelect.addEventListener("change", () => {
+      currentLang = langSelect.value;
+      if (window.localStorage) {
+        window.localStorage.setItem("hybrid_lang", currentLang);
+      }
+      setLanguage(currentLang);
+    });
+  }
+
+  setLanguage(currentLang);
+
+  if (bgSelect) {
+    currentBgFile = bgSelect.value || "background_print.jpg";
+    loadBackground(currentBgFile);
+    bgSelect.addEventListener("change", () => {
+      currentBgFile = bgSelect.value;
+      loadBackground(currentBgFile);
+    });
+  } else {
+    loadBackground(currentBgFile);
+  }
+
+  const farInputDefault = farInput.value || "Zauberstab";
+
+  if (presetFromUrl) {
+    if (presetFromUrl.farText !== undefined) farInput.value = presetFromUrl.farText;
+    if (presetFromUrl.nearText !== undefined) nearInput.value = presetFromUrl.nearText;
+    if (typeof presetFromUrl.autoNear === "boolean") autoNearEl.checked = presetFromUrl.autoNear;
+
+    if (presetFromUrl.fontSize !== undefined) fontSizeEl.value = presetFromUrl.fontSize;
+    if (presetFromUrl.farBlur !== undefined) farBlurEl.value = presetFromUrl.farBlur;
+    if (presetFromUrl.farHalo !== undefined) farHaloEl.value = presetFromUrl.farHalo;
+    if (presetFromUrl.nearStrength !== undefined) nearStrengthEl.value = presetFromUrl.nearStrength;
+    if (presetFromUrl.nearOpacity !== undefined) nearOpacityEl.value = presetFromUrl.nearOpacity;
+    if (presetFromUrl.nearFill !== undefined) nearFillEl.value = presetFromUrl.nearFill;
+
+    if (presetFromUrl.background && bgSelect) {
+      currentBgFile = presetFromUrl.background;
+      bgSelect.value = currentBgFile;
+      loadBackground(currentBgFile);
     }
   }
 
   if (!nearInput.value && autoNearEl.checked) {
-    nearInput.value = generateNearFromFar(farInput.value);
+    nearInput.value = generateNearFromFar(farInput.value || farInputDefault);
   }
 
   farInput.addEventListener("input", () => {
@@ -722,23 +901,15 @@ window.addEventListener("load", () => {
   document.getElementById("saveBtn").addEventListener("click", saveSingleCard);
   document.getElementById("saveA4Btn").addEventListener("click", saveA4Sheet);
   document.getElementById("savePdfBtn").addEventListener("click", savePdfA4);
-  const testBtn = document.getElementById("saveTestQrPdfBtn");
-if (testBtn) {
-  testBtn.addEventListener("click", () => {
-    console.log("Testkarten-Button geklickt");
-    saveTestPresetPdf();
-  });
-} else {
-  console.warn("Button #saveTestQrPdfBtn nicht gefunden – ID in index.html prüfen.");
-}
-
+  document.getElementById("saveTestQrPdfBtn").addEventListener("click", saveTestPresetPdf);
   document.getElementById("exportPresetBtn").addEventListener("click", exportPreset);
   document.getElementById("importPresetBtn").addEventListener("click", importPreset);
+  document.getElementById("sharePresetBtn").addEventListener("click", sharePresetLink);
   document.getElementById("donateBtn").addEventListener("click", () => {
     window.open("https://www.paypal.com/paypalme/timholzhausen", "_blank", "noopener");
   });
 
-  ["fontSize","farBlur","nearStrength","nearOpacity"].forEach(id => {
+  ["fontSize","farBlur","farHalo","nearStrength","nearOpacity","nearFill"].forEach(id => {
     const slider = document.getElementById(id);
     slider.addEventListener("input", () => {
       updateSliderLabel(id);

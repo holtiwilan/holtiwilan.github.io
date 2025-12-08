@@ -10,7 +10,7 @@ body {
 
 /* Linke Seite */
 #controls {
-  width: 340px;
+  width: 360px;
   padding: 16px 20px;
   box-sizing: border-box;
   background: #ffffff;
@@ -22,9 +22,34 @@ body {
   overflow-y: auto;
 }
 
+#headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 #controls h1 {
   font-size: 18px;
-  margin: 0 0 6px 0;
+  margin: 0 0 2px 0;
+}
+
+#languageSwitch {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+#languageSwitch label {
+  font-size: 10px;
+  font-weight: 500;
+  margin: 0;
+}
+
+#langSelect {
+  font-size: 11px;
+  padding: 2px 4px;
 }
 
 #controls small {
@@ -53,6 +78,15 @@ input[type="range"] {
   width: 100%;
 }
 
+#bgSelect {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -72,6 +106,7 @@ button {
 #renderBtn {
   background: #222;
   color: #fff;
+  margin-top: 10px;
 }
 
 #saveBtn,
@@ -102,6 +137,12 @@ button {
   width: 40px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Tooltip */
@@ -138,13 +179,15 @@ button {
   border-left: 3px solid #bbb;
   padding: 8px 10px;
   border-radius: 4px;
-  margin-top: 4px;
+  margin-top: 8px;
+  max-width: 100%;
 }
 
 .helpbox p {
   margin: 4px 0;
 }
 
+/* Kontext-Tipp */
 #contextTip {
   background: #eef3ff;
   border-left-color: #4b7bd8;
@@ -191,32 +234,49 @@ button {
   text-align: center;
 }
 
-/* rechte Seite – große Vorschau */
+/* rechte Seite – große Vorschau + Bereich darunter */
 #canvasWrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
   padding: 16px;
   box-sizing: border-box;
+  position: relative;
 }
 
 #mainPreviewLabel {
+  position: absolute;
+  top: 12px;
+  left: 16px;
   font-size: 12px;
   color: #555;
 }
 
 /* Canvas */
-canvas {
+#cardCanvas {
   background: #fff;
   box-shadow: 0 8px 20px rgba(0,0,0,0.18);
   max-width: 100%;
-  max-height: 100%;
+  max-height: 70vh;
 }
 
-/* Fern-Vorschau */
+/* Unterer Bereich unter der großen Nah-Vorschau */
+#belowPreview {
+  margin-top: 14px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Fern-Vorschau links */
+#belowLeft {
+  flex: 0 0 auto;
+}
+
 #previewContainer {
   margin-top: 4px;
 }
@@ -231,4 +291,9 @@ canvas {
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   background: #fff;
   max-width: 100%;
+}
+
+/* Hinweise rechts */
+#belowRight {
+  flex: 1 1 auto;
 }
